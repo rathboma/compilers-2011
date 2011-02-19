@@ -1,0 +1,3 @@
+#! /usr/bin/env bash
+flex $1
+gcc lex.yy.c -lfl -o lexer
