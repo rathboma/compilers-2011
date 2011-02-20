@@ -546,10 +546,6 @@ int yyget_lineno (void );
 
 void yyset_lineno (int line_number  );
 
-YYSTYPE * yyget_lval (void );
-
-void yyset_lval (YYSTYPE * yylval_param  );
-
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
  */
@@ -657,11 +653,9 @@ static int input (void );
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int yylex \
-               (YYSTYPE * yylval_param );
+extern int yylex (void);
 
-#define YY_DECL int yylex \
-               (YYSTYPE * yylval_param )
+#define YY_DECL int yylex (void)
 #endif /* !YY_DECL */
 
 /* Code executed at the beginning of each rule, after yytext and yyleng
@@ -687,13 +681,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-        YYSTYPE * yylval;
-    
 #line 77 "expressions.lex"
 
-#line 695 "lex.yy.c"
-
-    yylval = yylval_param;
+#line 687 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -779,7 +769,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 78 "expressions.lex"
-{yylval = (int) installID(); return(ID);}
+{printf("found id\n"); installID(); return(ID);}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
@@ -791,7 +781,7 @@ YY_RULE_SETUP
 #line 80 "expressions.lex"
 ECHO;
 	YY_BREAK
-#line 795 "lex.yy.c"
+#line 785 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1807,6 +1797,7 @@ struct number_entry{
 struct symbol_entry symboltable = {0, 0};
 
 int installID(){
+    printf("starting installID\n");
     symbol_entry s = &symboltable;
     while(s->next){
         s = s->next;
@@ -1816,11 +1807,22 @@ int installID(){
         }
     }
     symbol_entry new_s = (symbol_entry) malloc(sizeof(struct symbol_entry));
-    new_s->symbol = yytext;
+    s->symbol = (char*) malloc(sizeof(*yytext));
+    strcpy(s->symbol, yytext);
     new_s->next = NULL;
     s->next = new_s;
     printf("inserted symbol %s\n", yytext);
     return (int) new_s;
+}
+
+void printSymbolTable(){
+    symbol_entry s = &symboltable;
+    while(s->next){
+        printf("symbol table entry: %s\n", s->symbol);
+        s = s->next;
+    }
+    
+    
 }
 
 
@@ -1834,6 +1836,11 @@ char **argv;
     else
             yyin = stdin;
 
-    yylex();
+    while(yylex()){
+        
+    }
+    printf("printing symbol table\n");
+    printSymbolTable();
+    
     }
 

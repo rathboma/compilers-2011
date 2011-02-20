@@ -75,7 +75,7 @@ array_l			"["
 array_r			"]"
 
 %%
-{id}    {yylval = (int) installID(); return(ID);}
+{id}    {printf("found id\n"); installID(); return(ID);}
 .       {/* do nothing! (testing) */}
 %%
 
@@ -94,6 +94,7 @@ struct number_entry{
 struct symbol_entry symboltable = {0, 0};
 
 int installID(){
+    printf("starting installID\n");
     symbol_entry s = &symboltable;
     while(s->next){
         s = s->next;
@@ -103,11 +104,22 @@ int installID(){
         }
     }
     symbol_entry new_s = (symbol_entry) malloc(sizeof(struct symbol_entry));
-    new_s->symbol = yytext;
+    s->symbol = (char*) malloc(sizeof(*yytext));
+    strcpy(s->symbol, yytext);
     new_s->next = NULL;
     s->next = new_s;
     printf("inserted symbol %s\n", yytext);
     return (int) new_s;
+}
+
+void printSymbolTable(){
+    symbol_entry s = &symboltable;
+    while(s->next){
+        printf("symbol table entry: %s\n", s->symbol);
+        s = s->next;
+    }
+    
+    
 }
 
 
@@ -121,5 +133,10 @@ char **argv;
     else
             yyin = stdin;
 
-    yylex();
+    while(yylex()){
+        
+    }
+    printf("printing symbol table\n");
+    printSymbolTable();
+    
     }
