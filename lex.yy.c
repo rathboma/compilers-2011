@@ -2090,7 +2090,7 @@ int installNum(){
 
 void printSymbolTable(symbol_entry table){
     
-    symbol_entry s = table;
+    symbol_entry s = table->next;
     while(s){
         printf("entry: %s\n", s->symbol);
         s = s->next;
