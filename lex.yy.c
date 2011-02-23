@@ -2047,18 +2047,16 @@ void yyfree (void * ptr )
 
 
 
-typedef struct symbol_entry * symbol_entry;
-typedef struct number_entry * number_entry;
-struct symbol_entry{
+typedef struct s_entry * symbol_entry;
+
+struct s_entry{
     char *symbol;
-    struct symbol_entry *next;  
+    symbol_entry next;  
 };
 
 
-struct symbol_entry symboltable = {0, 0};
-struct symbol_entry numbertable = {0, 0};
-
-
+struct s_entry symboltable = {0, 0};
+struct s_entry numbertable = {0, 0};
 
 int install(symbol_entry table)
 {
@@ -2070,7 +2068,7 @@ int install(symbol_entry table)
             return((long)s);
         }
     }
-    symbol_entry new_s = (symbol_entry) malloc(sizeof(struct symbol_entry));
+    symbol_entry new_s = (symbol_entry) malloc(sizeof(struct s_entry));
     int length = 0;
     new_s->symbol = (char*)malloc(sizeof(yytext));
     strcpy(new_s->symbol, yytext);
