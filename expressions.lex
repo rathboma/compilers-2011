@@ -4,54 +4,15 @@
 /* need this for the call to atof() below */
 #include <math.h>
 #include <string.h>
+#include "translate.tab.h"
 // SYMBOL DECLARATIONS
 // and begin forward div do else end for function if array mod not of 
 //    or procedure program record then to type var while + * -  = < <= > 
 //    >= <> . , : ; := .. ( ) [ ]
-#define AND		0
-#define BGN 1
-#define FORWARD 2
-#define DIV 3
-#define DO 4
-#define ELSE 5
-#define END 6
-#define FOR 7
-#define FUNC 8
-#define IF 9
-#define ARRAY 10
-#define MOD 11
-#define NOT 12
-#define OF 13
-#define OR 14
-#define PROCEDURE 15
-#define PROGRAM 16
-#define RECORD 17
-#define THEN 18
-#define TO 19
-#define TYPE 20
-#define VAR 21
-#define WHILE 22
-#define MATH 23
-#define RELATIONAL 24 // < <= > >=
-#define STOP 25 // .
-#define SEPARATOR 26 // ,
-#define DECLARE 27 // :
-#define EOL 28 // ;
-#define ASSIGNMENT 29 // :=
-#define RANGE 30
-#define PAREN_L 31
-#define PAREN_R 32
-#define ARRAY_L 33
-#define ARRAY_R 34
-// COMPLICATED STUFF
-#define NUMBER 35
-#define ID 36
-#define STRING_LITERAL 37
-// wow, thats a lot of stuff.
-#define UNRECOG 9999
 
-
+//MOVING TOKENS TO THE BISON FILE
 %}
+%option bison-bridge
 
 ws				[ \t\n]+
 char 			[A-Za-z_]
@@ -105,9 +66,9 @@ string_literal 	\"[^"]*\"
 
 
 {ws}|{comment}      {/* do nothing*/}
-{id}                {installID(); return(ID);}
-{number}            {installNum(); return(NUMBER);}
-{string_literal}    {return(STRING_LITERAL);}
+{id}                {yylval = yytext; installID(); return(ID);}
+{number}            {yylval = atoi(yytext); installNum(); return(NUMBER);}
+{string_literal}    {yylval = atoi(yytext); return(STRING_LITERAL);}
 
 %%
 
@@ -115,9 +76,8 @@ typedef struct s_entry * symbol_entry;
 
 struct s_entry{
     char *symbol;
-    symbol_entry next;  
-};
-
+    symbol_entry next;
+    };
 
 struct s_entry symboltable = {0, 0};
 struct s_entry numbertable = {0, 0};
@@ -164,21 +124,21 @@ void printSymbolTable(symbol_entry table){
 }
 
 
-main( argc, argv )
-int argc;
-char **argv;
-    {
-    ++argv, --argc;  /* skip over program name */
-    if ( argc > 0 )
-            yyin = fopen( argv[0], "r" );
-    else
-            yyin = stdin;
-    int i = 0;
-    while(i = yylex()){
-        printf("found token '%s', token constant %d\n", yytext, i);
-    }
-    printf("printing symbol table\n");
-    printSymbolTable(&symboltable);
-    printf("printing number table\n");
-    printSymbolTable(&numbertable);
-    }
+// main( argc, argv )
+// int argc;
+// char **argv;
+//     {
+//     ++argv, --argc;  /* skip over program name */
+//     if ( argc > 0 )
+//             yyin = fopen( argv[0], "r" );
+//     else
+//             yyin = stdin;
+//     int i = 0;
+//     while(i = yylex()){
+//         printf("found token '%s', token constant %d\n", yytext, i);
+//     }
+//     printf("printing symbol table\n");
+//     printSymbolTable(&symboltable);
+//     printf("printing number table\n");
+//     printSymbolTable(&numbertable);
+//     }

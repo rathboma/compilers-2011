@@ -1,3 +1,5 @@
 #! /usr/bin/env bash
+bison -d translate.y
 flex expressions.lex
-gcc lex.yy.c -lfl -o lexer
+bison translate.y
+gcc translate.tab.c –ly -ll

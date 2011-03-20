@@ -2,3 +2,5 @@
 *.zip
 lex.yy.c
 lexer
+*.c
+*.h
