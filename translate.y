@@ -3,7 +3,7 @@
 /* Pass the argument to yyparse through to yylex. */
 #define YYPARSE_PARAM scanner
 #define YYLEX_PARAM   scanner
-
+#define YYPRINT
 
 %}
 
@@ -51,13 +51,11 @@
 
 %%
 //rules go here
-simple: ID ';'
-;
+simple: ID ';' { printf("%d\n", $1);}
 %%
 //code goes here
 
-
-
+//main function goes here
 
 
 

@@ -67,8 +67,8 @@ string_literal 	\"[^"]*\"
 
 {ws}|{comment}      {/* do nothing*/}
 {id}                {yylval = yytext; installID(); return(ID);}
-{number}            {yylval = atoi(yytext); installNum(); return(NUMBER);}
-{string_literal}    {yylval = atoi(yytext); return(STRING_LITERAL);}
+{number}            {yylval = yytext; installNum(); return(NUMBER);}
+{string_literal}    {yylval = yytext; return(STRING_LITERAL);}
 
 %%
 
