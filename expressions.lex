@@ -12,7 +12,7 @@
 
 //MOVING TOKENS TO THE BISON FILE
 %}
-%option bison-bridge
+
 
 ws				[ \t\n]+
 char 			[A-Za-z_]

@@ -1,8 +1,9 @@
 %{
 #include "lex.yy.c"
+
 /* Pass the argument to yyparse through to yylex. */
-#define YYPARSE_PARAM scanner
-#define YYLEX_PARAM   scanner
+// #define YYPARSE_PARAM scanner
+// #define YYLEX_PARAM   scanner
 #define YYPRINT
 
 %}
@@ -51,11 +52,28 @@
 
 %%
 //rules go here
-simple: ID ';' { printf("%d\n", $1);}
+simple: ID EOL { printf("match: %d\n", $1);}
+;
 %%
 //code goes here
 
 //main function goes here
+main( argc, argv )
+int argc;
+char **argv;
+    {
+    ++argv, --argc;  /* skip over program name */
+    if ( argc > 0 )
+            yyin = fopen( argv[0], "r" );
+    else
+            yyin = stdin;
+    int i = 0;
+    yyparse();
+    printf("printing symbol table\n");
+    printSymbolTable(&symboltable);
+    printf("printing number table\n");
+    printSymbolTable(&numbertable);
+}
 
 
 
