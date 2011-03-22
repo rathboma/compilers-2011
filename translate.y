@@ -1,6 +1,6 @@
 %{
 #include "lex.yy.c"
-
+//#include "symbol_table.h"
 /* Pass the argument to yyparse through to yylex. */
 // #define YYPARSE_PARAM scanner
 // #define YYLEX_PARAM   scanner
@@ -33,6 +33,7 @@
 %token WHILE
 %token MATH
 %token RELATIONAL // < <= > >=
+%token EQUALS
 %token STOP // .
 %token SEPARATOR // ,
 %token DECLARE // :
@@ -44,16 +45,48 @@
 %token ARRAY_L
 %token ARRAY_R
 // COMPLICATED STUFF
-%token NUMBER
+%token FLOAT
+%token INT
 %token ID
 %token STRING_LITERAL
 // wow, thats a lot of stuff.
 // %token UNRECOG
 
+%union {
+    int intVal;
+    double doubleVal;
+    char* strVal;
+    symbol_entry table;
+}
+
 %%
 //rules go here
-simple: ID EOL { printf("match: %d\n", $1);}
-;
+program: PROGRAM ID EOL typeDefinitions
+            {printf("program\n");}
+        | PROGRAM ID EOL
+            {printf("program\n");}
+        ;        
+typeDefinitions: TYPE multipleTypeDefs
+            {printf("typeDefinitions\n");}
+        ;
+multipleTypeDefs: typeDefinition multipleTypeDefs
+            | /* empty */
+        ;
+
+typeDefinition:
+        ID EQUALS type EOL
+            {   printf("typeDefinition for %s, type = %s\n", $<table>1->symbol, $<table>3->symbol);
+                updateSymbolTable($<table>1->symbol, $<table>3->symbol);
+             }
+        ;
+type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
+            {printf("array type matched\n"); 
+                $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
+                $<table>$->symbol = malloc(sizeof("array of ") + sizeof($<table>8->symbol));
+                sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
+                }
+        | ID
+        ;
 %%
 //code goes here
 

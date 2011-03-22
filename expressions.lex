@@ -4,6 +4,7 @@
 /* need this for the call to atof() below */
 #include <math.h>
 #include <string.h>
+#include "symbol_table.h"
 #include "translate.tab.h"
 // SYMBOL DECLARATIONS
 // and begin forward div do else end for function if array mod not of 
@@ -22,7 +23,8 @@ decimal			{digit}+(\.{digit}+)
 
 comment 	    "{"[^{}]*"}"
 id				{char}({char}|{digit})*
-number			[+-]?({integer}|{decimal})(E[+-]?{integer}+)?
+int             [+-]?{integer}
+float			[+-]?{decimal}(E{int}+)?
 string_literal 	\"[^"]*\"
 
 
@@ -52,7 +54,8 @@ string_literal 	\"[^"]*\"
 "while"     {return(WHILE);}
 
 "+"|"-"|"*"|"/" {return(MATH);}
-"="|"<="|">="|"<>"  {return(RELATIONAL);}
+"<="|">="|"<>"  {return(RELATIONAL);}
+"="             {return(EQUALS);}
 "."                 {return(STOP);} 
 ","                 {return(SEPARATOR);} 
 ":"                 {return(DECLARE);} 
@@ -66,62 +69,13 @@ string_literal 	\"[^"]*\"
 
 
 {ws}|{comment}      {/* do nothing*/}
-{id}                {yylval = yytext; installID(); return(ID);}
-{number}            {yylval = yytext; installNum(); return(NUMBER);}
-{string_literal}    {yylval = yytext; return(STRING_LITERAL);}
+{id}                {yylval.table = installID(); return(ID);}
+{int}               {yylval.table = installNum(); return(INT);}
+{float}            {yylval.table = installNum(); return(FLOAT);}
+{string_literal}    {yylval.strVal = yytext; return(STRING_LITERAL);}
 
 %%
 
-typedef struct s_entry * symbol_entry;
-
-struct s_entry{
-    char *symbol;
-    symbol_entry next;
-    };
-
-struct s_entry symboltable = {0, 0};
-struct s_entry numbertable = {0, 0};
-
-int install(symbol_entry table)
-{
-    symbol_entry s = table;
-    while(s->next){
-        s = s->next;
-        if(strcmp(s->symbol, yytext) == 0){
-            // printf("symbol already found %s\n", yytext);
-            return((long)s);
-        }
-    }
-    symbol_entry new_s = (symbol_entry) malloc(sizeof(struct s_entry));
-    int length = 0;
-    new_s->symbol = (char*)malloc(sizeof(yytext));
-    strcpy(new_s->symbol, yytext);
-    new_s->next = NULL;
-    s->next = new_s;
-    // printf("inserted symbol %s\n", new_s->symbol);
-    return((long)new_s);
-}
-
-
-int installID(){
-    // printf("starting installID\n");
-    install(&symboltable);
-}
-
-int installNum(){
-    install(&numbertable);
-}
-
-void printSymbolTable(symbol_entry table){
-    
-    symbol_entry s = table->next;
-    while(s){
-        printf("entry: %s\n", s->symbol);
-        s = s->next;
-    }
-    
-    
-}
 
 
 // main( argc, argv )
