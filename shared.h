@@ -69,7 +69,7 @@ symbol_entry installNum(){
 void updateSymbolTable(char* key, char* t){
     printf("updating: %s with %s\n", key, t);
     symbol_entry s = findEntry(&symboltable, key);
-    s->type = (char*)malloc(sizeof(t));
+    s->type = (char*)calloc(strlen(t) + 1, sizeof(char));
     sprintf(s->type, "%s", t);
 }
 

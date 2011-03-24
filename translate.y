@@ -90,7 +90,7 @@ identifierList:
             printf("identifierList!");
             $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
             
-            $<table>$->symbol = malloc(sizeof($<table>1->symbol));
+            $<table>$->symbol = (char*)calloc(strlen($<table>1->symbol) + 1, sizeof(char));
             
             strcpy($<table>$->symbol, $<table>1->symbol);
             if($<table>2) {
@@ -329,7 +329,7 @@ typeDefinition:
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
             {reg("type"); 
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-                $<table>$->symbol = malloc(sizeof("array of ") + sizeof($<table>8->symbol));
+                $<table>$->symbol = calloc(strlen("array of ") + strlen($<table>8->symbol) + 1, sizeof(char));
                 sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
                 }
         | RECORD fieldList END
@@ -338,7 +338,7 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
                 char* joined = join($<table>2);
                 printf("joined: %s\n", joined);
-                $<table>$->symbol = malloc(sizeof("record containing ") + sizeof(joined));
+                $<table>$->symbol = (char*) calloc(strlen("record containing ") + strlen(joined) + 1, sizeof(char));
                 sprintf($<table>$->symbol, "%s%s", "record containing ", joined);
             }
         | ID
