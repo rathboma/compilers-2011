@@ -66,10 +66,11 @@ symbol_entry installNum(){
     install(&numbertable, yytext);
 }
 
-void updateSymbolTable(char* key, char* type){
+void updateSymbolTable(char* key, char* t){
+    printf("updating: %s with %s\n", key, t);
     symbol_entry s = findEntry(&symboltable, key);
-    s->type = (char*)malloc(sizeof(type));
-    strcpy(s->type, type);
+    s->type = (char*)malloc(sizeof(t));
+    sprintf(s->type, "%s", t);
 }
 
 void printSymbolTables(char* filename){
@@ -110,4 +111,39 @@ void reg(char* rule){
     //chainValue(&parsetable, rule);
 }
 
+int getlength(symbol_entry s){
+    int result = 0;
+    while(s){
+        result = result + 1;
+        s = s->next;
+    }
+    return result;
+}
 
+char* join(symbol_entry s){
+    int total = 0;
+    symbol_entry si = s;
+    if(!s) return NULL;
+    while(si){
+        total += sizeof(si->symbol);
+        si = si->next;
+    }
+    char* result = malloc(total + getlength(s)); //assuming a character is 1 byte... bit hacky
+    si = s->next;
+    sprintf(result, "%s", s->symbol);
+    while(si){
+        sprintf(result, "%s,%s", result, si->symbol);
+        si = si->next;
+    }
+    return result;
+}
+
+
+void updateAll(symbol_entry s, char* type){
+    symbol_entry si = s;
+    while(si){
+        printf("updateAll: %s\n", si->symbol);
+        updateSymbolTable(si->symbol, type);
+        si = si->next;
+    }
+}

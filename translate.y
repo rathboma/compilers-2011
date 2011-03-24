@@ -78,17 +78,39 @@ multiVarDeclarations:
         ;
 variableDeclaration:
         identifierList DECLARE type
-            {reg("variableDeclaration");}
+            {
+                updateAll($<table>1, $<table>3->symbol);
+                reg("variableDeclaration");
+            }
         ;
         
 identifierList:
         ID multiIds
-        {$<intVal>$ = 1 + $<intVal>2; reg("identifierList");}
+        {
+            printf("identifierList!");
+            $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
+            
+            $<table>$->symbol = malloc(sizeof($<table>1->symbol));
+            
+            strcpy($<table>$->symbol, $<table>1->symbol);
+            if($<table>2) {
+                printf("joining chain\n");
+                printf("next value: '%s'\n", $<table>2->symbol);
+                $<table>$->next = $<table>2;
+                }
+            
+            /*$<intVal>$ = 1 + $<intVal>2; */
+            reg("identifierList");
+            
+        }
         ;
 multiIds: SEPARATOR identifierList
-        {$<intVal>$ = $<intVal>2;}
+        {
+            $<table>$ = $<table>2;
+/*            $<intVal>$ = $<intVal>2;*/
+        }
         | /*empty*/
-        {$<intVal>$ = 0;}
+        {$<intVal>$ = 0; $<table>$ = NULL;}
         ;
 subprogramDeclarations:
         procedureDeclaration EOL subprogramDeclarations
@@ -126,10 +148,18 @@ blockOrForward:
     
 block:  variableDeclarations compoundStatement
     {reg("block");}
+
+paramDeclare:
+    identifierList DECLARE type
+    {
+        updateAll($<table>1, $<table>3->symbol);
+    }
+    ;
+
 paramList:
-        paramList EOL identifierList DECLARE type
+        paramList EOL paramDeclare
         {$<intVal>$ = $<intVal>1 + $<intVal>3;}
-        | identifierList DECLARE type 
+        | paramDeclare 
         {$<intVal>$ = $<intVal>1;}
         ;
 formalParameterList:
@@ -303,33 +333,30 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
                 sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
                 }
         | RECORD fieldList END
-            {reg("type"); 
+            {
+                reg("type"); 
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-                $<table>$->symbol = malloc(sizeof("record ") + sizeof($<table>2->symbol));
-                sprintf($<table>$->symbol, "%s%s", "record ", $<table>2->symbol);
-                //printf("%s%s\n", "record ", $<table>2->symbol);
-                }
+                char* joined = join($<table>2);
+                printf("joined: %s\n", joined);
+                $<table>$->symbol = malloc(sizeof("record containing ") + sizeof(joined));
+                sprintf($<table>$->symbol, "%s%s", "record containing ", joined);
+            }
         | ID
         {
             reg("type");
             
             }
         ;
+
 fieldList:
-    identifierList DECLARE type EOL fieldList
-    {
-        $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-        $<table>$->symbol = malloc(52+sizeof($<table>3->symbol) + sizeof($<table>5->symbol));
-        sprintf($<table>$->symbol, "%d%s:%s", $<intVal>1, $<table>3->symbol, $<table>5->symbol);
-        reg("fieldList");
-        
+    paramDeclare EOL fieldList
+    {   
+        $<table>$ = $<table>1;
+        $<table>$->next = $<table>3;
+        reg("fieldList");   
     }
-    | identifierList DECLARE type
+    | paramDeclare
     {
-        //2*type
-        $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-        $<table>$->symbol = malloc(50+sizeof($<table>3->symbol));
-        sprintf($<table>$->symbol, "%d%s", $<intVal>1, $<table>3->symbol);
         reg("fieldList");
     }
     ;

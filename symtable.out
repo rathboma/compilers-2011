@@ -1,16 +1,16 @@
-foo3 2
+foo3 1050352
 bar 
-foo2 2
-foo1 1
-z 
+foo2 2100192
+foo1 1049888
+z s
 s string
-y array of integer@
+y array of integer`
 string 
-c 
+c string
 integer 
-b 
-a 
-r record 2integer:`
+b integer
+a integer
+r record containin€
 errorfree 
 3
 0
