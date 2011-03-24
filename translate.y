@@ -31,7 +31,8 @@
 %token TYPE
 %token VAR
 %token WHILE
-%token MATH
+%token ADDOP
+%token MULTIOP
 %token RELATIONAL // < <= > >=
 %token EQUALS
 %token STOP // .
@@ -62,7 +63,7 @@
 %%
 //rules go here
 program: 
-        PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement
+        PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement STOP
             {reg("program");}
         ;
 
@@ -73,7 +74,7 @@ variableDeclarations:
         ;
 multiVarDeclarations:
         variableDeclaration EOL multiVarDeclarations
-        | /*empty*/
+        | variableDeclaration EOL
         ;
 variableDeclaration:
         identifierList DECLARE type
@@ -82,7 +83,7 @@ variableDeclaration:
         
 identifierList:
         ID multiIds
-        {$<intVal>$ = 1 + $<intVal>2;}
+        {$<intVal>$ = 1 + $<intVal>2; reg("identifierList");}
         ;
 multiIds: SEPARATOR identifierList
         {$<intVal>$ = $<intVal>2;}
@@ -90,19 +91,33 @@ multiIds: SEPARATOR identifierList
         {$<intVal>$ = 0;}
         ;
 subprogramDeclarations:
-        procedureDeclaration EOL
-        | functionDeclaration EOL
+        procedureDeclaration EOL subprogramDeclarations
+            {reg("subprogramDeclarations");}
+        | functionDeclaration EOL subprogramDeclarations
+            {reg("subprogramDeclarations");}
         | /*empty*/
         ;
-functionDeclaration: /*empty*/
+functionDeclaration: 
+        FUNC ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
+        {
+            char asString[50];
+            sprintf(asString, "%d", $<intVal>4);
+            updateSymbolTable($<table>2->symbol, asString);
+            reg("functionDeclaration");
+        }
         ;
+resultType:
+    ID
+    {reg("resultType");}
+    ;
         
 procedureDeclaration:
         PROCEDURE ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
         {//here we want to set the type of ID to be the length of the formalParameterList
-            char* asString = "";
+            char asString[50];
             sprintf(asString, "%d", $<intVal>4);
             updateSymbolTable($<table>2->symbol, asString);
+            reg("procedureDeclaration");
             }
         ;
 blockOrForward:
@@ -113,7 +128,7 @@ block:  variableDeclarations compoundStatement
     {reg("block");}
 paramList:
         paramList EOL identifierList DECLARE type
-        {$<intVal>$ = $<intVal>1 + $<intVal>3; }
+        {$<intVal>$ = $<intVal>1 + $<intVal>3;}
         | identifierList DECLARE type 
         {$<intVal>$ = $<intVal>1;}
         ;
@@ -124,12 +139,147 @@ formalParameterList:
         {$<intVal>$ = 0;}
         ;
 
-
-
 compoundStatement:
-        /*empty*/
+        BGN statementSequence END
+        {reg("compoundStatement");}
         ;
 
+statementSequence:
+        statement EOL statementSequence
+        {reg("statementSequence");}
+        | statement
+        {reg("statementSequence");}
+        ;
+statement:
+    open
+    {reg("statement");}
+    | matched
+    {reg("statement");}
+    ;
+
+otherStatements:
+    compoundStatement
+    {reg("structuredStatement");}
+    | simpleStatement
+    {reg("simpleStatement");}
+    ;
+loopHeader:
+    FOR ID ASSIGNMENT expression TO expression DO
+    | WHILE expression DO
+
+open:
+    IF expression THEN statement
+        {reg("structuredStatement");}
+    | IF expression THEN matched ELSE open
+        {reg("structuredStatement");}
+    | loopHeader open
+        {reg("structuredStatement");}
+    ;
+matched:
+    IF expression THEN matched ELSE matched
+        {reg("structuredStatement");}
+    | otherStatements
+        {reg("structuredStatement");}
+    | loopHeader matched
+        {reg("structuredStatement");}
+    ;
+
+
+simpleStatement:
+    assignmentStatement
+    | procedureStatement
+    | /*empty*/
+    ;
+assignmentStatement:
+        variable ASSIGNMENT expression
+            {reg("assignmentStatement");}
+        ;
+procedureStatement:
+        ID PAREN_L actualParameterList PAREN_R
+        {reg("procedureStatement");}
+        ;
+apList:
+        expression SEPARATOR apList
+        | expression
+        ;
+actualParameterList:
+        apList 
+        {reg("actualParameterList");}
+        | /*empty*/
+        ;
+        
+variable:
+    ID componentSelection
+    {reg("variable");}
+    ;
+componentSelection:
+    STOP ID componentSelection
+        {reg("componentSelection");}
+    | ARRAY_L expression ARRAY_R componentSelection
+        {reg("componentSelection");}
+    | /*empty*/
+    ;
+expression:
+    simpleExpression relationalOp simpleExpression
+        {reg("expression");}
+    | simpleExpression
+        {reg("expression");}
+    ;
+    
+addOpTerm:
+    addOp term addOpTerm
+    | /*empty*/
+    ;
+relationalOp:
+    RELATIONAL | EQUALS
+        {reg("relationalOp");}
+    ;
+mulOpFactor:
+    mulOp factor mulOpFactor
+    | /*empty*/
+    ;
+term:
+    factor mulOpFactor
+        {reg("term");}
+    ;
+factorOptions:
+    INT 
+    | STRING_LITERAL
+    | variable 
+    | functionReference 
+    | NOT factor 
+    | PAREN_L expression PAREN_R
+    ;
+factor:
+    factorOptions
+        {reg("factor");}
+    ;
+functionReference:
+    ID PAREN_L actualParameterList PAREN_R
+        {reg("functionReference");}
+    ;
+
+simpleExpression:
+    sign term addOpTerm
+        {reg("simpleExpression");}
+    ;
+addOp:
+    ADDOP 
+        {reg("addOp");}
+    | OR
+        {reg("addOp");}
+    ;
+mulOp:
+    MULTIOP 
+        {reg("mulOp");}
+    | MOD 
+        {reg("mulOp");}
+    | AND
+        {reg("mulOp");}
+    ;
+sign:
+    ADDOP {reg("sign");} | /*empty*/
+    ;
 typeDefinitions: TYPE multipleTypeDefs
             {reg("typeDefinitions");}
             | /*empty*/
@@ -152,9 +302,34 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
                 $<table>$->symbol = malloc(sizeof("array of ") + sizeof($<table>8->symbol));
                 sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
                 }
+        | RECORD fieldList END
+            {reg("type"); 
+                $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
+                $<table>$->symbol = malloc(sizeof("record ") + sizeof($<table>2->symbol));
+                sprintf($<table>$->symbol, "%s%s", "record ", $<table>2->symbol);
+                printf("%s%s\n", "record ", $<table>2->symbol);
+                }
         | ID
         {reg("type");}
         ;
+fieldList:
+    identifierList DECLARE type EOL fieldList
+    {
+        $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
+        $<table>$->symbol = malloc(51+sizeof($<table>3->symbol) + sizeof($<table>5->symbol));
+        sprintf($<table>$->symbol, "%d%s:%s", $<intVal>1, $<table>3->symbol, $<table>5->symbol);
+        reg("fieldList");
+        
+    }
+    | identifierList DECLARE type
+    {
+        //2*type
+        $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
+        $<table>$->symbol = malloc(50+sizeof($<table>3->symbol));
+        sprintf($<table>$->symbol, "%d%s", $<intVal>1, $<table>3->symbol);
+        reg("fieldList");
+    }
+    ;
 
 %%
 //code goes here
@@ -165,16 +340,20 @@ int argc;
 char **argv;
     {
     ++argv, --argc;  /* skip over program name */
-    if ( argc > 0 )
-            yyin = fopen( argv[0], "r" );
-    else
-            yyin = stdin;
+    
+    if ( argc == 0 ) exit(1);
+            
+    yyin = fopen( argv[0], "r" );
+
     int i = 0;
+    parsefile = fopen("rules.out", "w");
     yyparse();
-    printf("printing symbol table\n");
-    printSymbolTable(&symboltable);
-    printf("printing number table\n");
-    printSymbolTable(&numbertable);
+    fclose(parsefile);
+    fclose(yyin);
+    printf("printing symbol table to symtable.out\n");
+    printSymbolTables("symtable.out");
+    
+    
 }
 
 

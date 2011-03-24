@@ -4,3 +4,4 @@ bison -d translate.y
 flex expressions.lex
 bison translate.y
 gcc translate.tab.c -ly -ll
+bison -v translate.y

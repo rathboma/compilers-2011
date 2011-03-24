@@ -53,8 +53,9 @@ string_literal 	\"[^"]*\"
 "var"       {return(VAR);}
 "while"     {return(WHILE);}
 
-"+"|"-"|"*"|"/" {return(MATH);}
-"<="|">="|"<>"  {return(RELATIONAL);}
+"+"|"-"         {return(ADDOP);}
+"*"|"div"         {return(MULTIOP);}
+"<" | ">" | "<="|">="|"<>"  {return(RELATIONAL);}
 "="             {return(EQUALS);}
 "."                 {return(STOP);} 
 ","                 {return(SEPARATOR);} 
