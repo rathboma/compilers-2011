@@ -1,7 +1,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
-
+#include <stdlib.h>
 typedef struct s_entry * symbol_entry;
 
 struct s_entry{
