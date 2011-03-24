@@ -319,7 +319,7 @@ fieldList:
     identifierList DECLARE type EOL fieldList
     {
         $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-        $<table>$->symbol = malloc(51+sizeof($<table>3->symbol) + sizeof($<table>5->symbol));
+        $<table>$->symbol = malloc(52+sizeof($<table>3->symbol) + sizeof($<table>5->symbol));
         sprintf($<table>$->symbol, "%d%s:%s", $<intVal>1, $<table>3->symbol, $<table>5->symbol);
         reg("fieldList");
         
