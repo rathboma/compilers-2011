@@ -1,10 +1,18 @@
-p 
-m 
+foo3 2
+bar 
+foo2 2
+foo1 1
 z 
-integer 
-in integer
-string 
 s string
+y array of integer@
+string 
+c 
+integer 
+b 
+a 
+r record 2integer:`
 errorfree 
-7
-5
+3
+0
+10
+1
