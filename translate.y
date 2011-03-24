@@ -306,20 +306,21 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
             {reg("type"); 
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
                 $<table>$->symbol = malloc(sizeof("record ") + sizeof($<table>2->symbol));
-                sprintf($<table>$->symbol, "a");
-                //sprintf($<table>$->symbol, "%s%s", "record ", $<table>2->symbol);
+                sprintf($<table>$->symbol, "%s%s", "record ", $<table>2->symbol);
                 //printf("%s%s\n", "record ", $<table>2->symbol);
                 }
         | ID
-        {reg("type");}
+        {
+            reg("type");
+            
+            }
         ;
 fieldList:
     identifierList DECLARE type EOL fieldList
     {
         $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
         $<table>$->symbol = malloc(51+sizeof($<table>3->symbol) + sizeof($<table>5->symbol));
-        sprintf($<table>$->symbol, "a");
-        //sprintf($<table>$->symbol, "%d%s:%s", $<intVal>1, $<table>3->symbol, $<table>5->symbol);
+        sprintf($<table>$->symbol, "%d%s:%s", $<intVal>1, $<table>3->symbol, $<table>5->symbol);
         reg("fieldList");
         
     }
@@ -328,8 +329,7 @@ fieldList:
         //2*type
         $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
         $<table>$->symbol = malloc(50+sizeof($<table>3->symbol));
-        sprintf($<table>$->symbol, "a");
-        //sprintf($<table>$->symbol, "%d%s", $<intVal>1, $<table>3->symbol);
+        sprintf($<table>$->symbol, "%d%s", $<intVal>1, $<table>3->symbol);
         reg("fieldList");
     }
     ;
