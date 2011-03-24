@@ -61,13 +61,78 @@
 
 %%
 //rules go here
-program: PROGRAM ID EOL typeDefinitions
-            {printf("program\n");}
-        | PROGRAM ID EOL
-            {printf("program\n");}
-        ;        
+program: 
+        PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement
+            {reg("program");}
+        ;
+
+variableDeclarations: 
+        VAR multiVarDeclarations
+            {reg("variableDeclarations");}
+        | /*empty*/
+        ;
+multiVarDeclarations:
+        variableDeclaration EOL multiVarDeclarations
+        | /*empty*/
+        ;
+variableDeclaration:
+        identifierList DECLARE type
+            {reg("variableDeclaration");}
+        ;
+        
+identifierList:
+        ID multiIds
+        {$<intVal>$ = 1 + $<intVal>2;}
+        ;
+multiIds: SEPARATOR identifierList
+        {$<intVal>$ = $<intVal>2;}
+        | /*empty*/
+        {$<intVal>$ = 0;}
+        ;
+subprogramDeclarations:
+        procedureDeclaration EOL
+        | functionDeclaration EOL
+        | /*empty*/
+        ;
+functionDeclaration: /*empty*/
+        ;
+        
+procedureDeclaration:
+        PROCEDURE ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
+        {//here we want to set the type of ID to be the length of the formalParameterList
+            char* asString = "";
+            sprintf(asString, "%d", $<intVal>4);
+            updateSymbolTable($<table>2->symbol, asString);
+            }
+        ;
+blockOrForward:
+    block | FORWARD
+    ;
+    
+block:  variableDeclarations compoundStatement
+    {reg("block");}
+paramList:
+        paramList EOL identifierList DECLARE type
+        {$<intVal>$ = $<intVal>1 + $<intVal>3; }
+        | identifierList DECLARE type 
+        {$<intVal>$ = $<intVal>1;}
+        ;
+formalParameterList:
+        paramList 
+        {reg("formalParameterList");}
+        | /*empty*/
+        {$<intVal>$ = 0;}
+        ;
+
+
+
+compoundStatement:
+        /*empty*/
+        ;
+
 typeDefinitions: TYPE multipleTypeDefs
-            {printf("typeDefinitions\n");}
+            {reg("typeDefinitions");}
+            | /*empty*/
         ;
 multipleTypeDefs: typeDefinition multipleTypeDefs
             | /* empty */
@@ -75,18 +140,22 @@ multipleTypeDefs: typeDefinition multipleTypeDefs
 
 typeDefinition:
         ID EQUALS type EOL
-            {   printf("typeDefinition for %s, type = %s\n", $<table>1->symbol, $<table>3->symbol);
+            {   //printf("typeDefinition for %s, type = %s\n", $<table>1->symbol, $<table>3->symbol);
+                reg("typeDefinition");
                 updateSymbolTable($<table>1->symbol, $<table>3->symbol);
              }
         ;
+
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
-            {printf("array type matched\n"); 
+            {reg("type"); 
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
                 $<table>$->symbol = malloc(sizeof("array of ") + sizeof($<table>8->symbol));
                 sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
                 }
         | ID
+        {reg("type");}
         ;
+
 %%
 //code goes here
 

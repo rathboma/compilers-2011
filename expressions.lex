@@ -4,7 +4,7 @@
 /* need this for the call to atof() below */
 #include <math.h>
 #include <string.h>
-#include "symbol_table.h"
+#include "shared.h"
 #include "translate.tab.h"
 // SYMBOL DECLARATIONS
 // and begin forward div do else end for function if array mod not of 
