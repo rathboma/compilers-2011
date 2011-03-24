@@ -3,5 +3,5 @@
 lex.yy.c
 lexer
 *.c
-*.h
+translate*.h
 a.out

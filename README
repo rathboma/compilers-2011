@@ -1,0 +1,6 @@
+Simple.
+
+To build just run:
+%>./build_and_compile
+then to generate rules.out and symboltable.out:
+%>./a.out test_programs/test1.p
