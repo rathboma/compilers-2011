@@ -70,6 +70,7 @@ void updateSymbolTable(char* key, char* t){
     symbol_entry s = findEntry(&symboltable, key);
     s->type = (char*)calloc(strlen(t) + 1, sizeof(char));
     sprintf(s->type, "%s", t);
+    printf("done\n");
 }
 
 void printSymbolTables(char* filename){
@@ -87,6 +88,16 @@ void printSymbolTables(char* filename){
     }
     fclose(file);
     printf("I have just written the symbol table.\n");    
+}
+
+int lengthOf(symbol_entry s){
+    int result = 0;
+    while(s){
+        result++;
+        //printf("counting: %s\n", s->symbol);
+        s = s->next;
+    }
+    return(result);
 }
 
 

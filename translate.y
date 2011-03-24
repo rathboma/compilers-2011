@@ -99,7 +99,7 @@ identifierList:
                 $<table>$->next = $<table>2;
                 }
             
-            /*$<intVal>$ = 1 + $<intVal>2; */
+
             reg("identifierList");
             
         }
@@ -107,10 +107,13 @@ identifierList:
 multiIds: SEPARATOR identifierList
         {
             $<table>$ = $<table>2;
-/*            $<intVal>$ = $<intVal>2;*/
+
         }
         | /*empty*/
-        {$<intVal>$ = 0; $<table>$ = NULL;}
+        {
+
+            $<table>$ = NULL;
+        }
         ;
 subprogramDeclarations:
         procedureDeclaration EOL subprogramDeclarations
@@ -122,8 +125,10 @@ subprogramDeclarations:
 functionDeclaration: 
         FUNC ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
         {
-            char asString[50];
-            sprintf(asString, "%d", $<intVal>4);
+            
+            int args = lengthOf($<table>4);
+            char asString[(args % 10) + 1];
+            sprintf(asString, "%d", args);
             updateSymbolTable($<table>2->symbol, asString);
             reg("functionDeclaration");
         }
@@ -136,8 +141,9 @@ resultType:
 procedureDeclaration:
         PROCEDURE ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
         {//here we want to set the type of ID to be the length of the formalParameterList
-            char asString[50];
-            sprintf(asString, "%d", $<intVal>4);
+            int args = lengthOf($<table>4);
+            char asString[(args % 10) + 1];
+            sprintf(asString, "%d", args);
             updateSymbolTable($<table>2->symbol, asString);
             reg("procedureDeclaration");
             }
@@ -158,7 +164,7 @@ paramDeclare:
 
 paramList:
         paramList EOL paramDeclare
-        {$<intVal>$ = $<intVal>1 + $<intVal>3;}
+        {}
         | paramDeclare 
         {$<intVal>$ = $<intVal>1;}
         ;
@@ -382,7 +388,7 @@ char **argv;
     fclose(yyin);
     printf("printing symbol table to symtable.out\n");
     printSymbolTables("symtable.out");
-    printParseTable("rules.out");    
+    printParseTable("rules.out");
 }
 
 
