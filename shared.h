@@ -13,7 +13,6 @@ struct s_entry{
 struct s_entry symboltable = {0, 0, 0};
 struct s_entry numbertable = {0, 0, 0};
 struct s_entry parsetable = {0, 0, 0};
-FILE* parsefile;
 symbol_entry findEntry(symbol_entry table, char* value){
     symbol_entry s = table;
     while(s->next){
@@ -51,7 +50,7 @@ void chainValue(symbol_entry t, char* v){
     }
     
     symbol_entry ns = (symbol_entry) malloc(sizeof(struct s_entry));
-    ns->symbol = (char*)malloc(sizeof(v));
+    ns->symbol = (char*)calloc(strlen(v) + 1, sizeof(char));
     strcpy(ns->symbol, v);
     s->next = ns;
 }
@@ -105,10 +104,10 @@ void printParseTable(char* filename){
 }
 
 void reg(char* rule){
-    fprintf(parsefile, "%s\n", rule);
+    //fprintf(parsefile, "%s\n", rule);
     //for some reason, keeping these in a linked list causes weird problems with null termination. for not just
     // dump straight to the file.
-    //chainValue(&parsetable, rule);
+    chainValue(&parsetable, rule);
 }
 
 int getlength(symbol_entry s){

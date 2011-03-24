@@ -3,5 +3,5 @@ rm -rf *.o *.c translate.tab.h
 bison -d translate.y
 flex expressions.lex
 bison translate.y
-gcc -g translate.tab.c -ly -ll
+gcc translate.tab.c -ly -ll
 bison -v translate.y

@@ -87,15 +87,15 @@ variableDeclaration:
 identifierList:
         ID multiIds
         {
-            printf("identifierList!");
+            //printf("identifierList!");
             $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
             
             $<table>$->symbol = (char*)calloc(strlen($<table>1->symbol) + 1, sizeof(char));
             
             strcpy($<table>$->symbol, $<table>1->symbol);
             if($<table>2) {
-                printf("joining chain\n");
-                printf("next value: '%s'\n", $<table>2->symbol);
+                //printf("joining chain\n");
+                //printf("next value: '%s'\n", $<table>2->symbol);
                 $<table>$->next = $<table>2;
                 }
             
@@ -337,7 +337,7 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
                 reg("type"); 
                 $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
                 char* joined = join($<table>2);
-                printf("joined: %s\n", joined);
+                //printf("joined: %s\n", joined);
                 $<table>$->symbol = (char*) calloc(strlen("record containing ") + strlen(joined) + 1, sizeof(char));
                 sprintf($<table>$->symbol, "%s%s", "record containing ", joined);
             }
@@ -376,14 +376,13 @@ char **argv;
     yyin = fopen( argv[0], "r" );
 
     int i = 0;
-    parsefile = fopen("rules.out", "w");
+
     yyparse();
-    fclose(parsefile);
+
     fclose(yyin);
     printf("printing symbol table to symtable.out\n");
     printSymbolTables("symtable.out");
-    
-    
+    printParseTable("rules.out");    
 }
 
 
