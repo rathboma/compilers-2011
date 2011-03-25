@@ -43,7 +43,7 @@ symbol_entry install(symbol_entry table, char* value)
     return(new_s);
 }
 
-void chainValue(symbol_entry t, char* v){
+symbol_entry chainValue(symbol_entry t, char* v){
     symbol_entry s = t;
     while(s->next){
         s = s->next;
@@ -53,6 +53,7 @@ void chainValue(symbol_entry t, char* v){
     ns->symbol = (char*)calloc(strlen(v) + 1, sizeof(char));
     strcpy(ns->symbol, v);
     s->next = ns;
+    return(ns);
 }
 
 
@@ -68,8 +69,12 @@ symbol_entry installNum(){
 void updateSymbolTable(char* key, char* t){
     printf("updating: %s with %s\n", key, t);
     symbol_entry s = findEntry(&symboltable, key);
+    if(s->type){
+        s = chainValue(s, key);
+    }
     s->type = (char*)calloc(strlen(t) + 1, sizeof(char));
     sprintf(s->type, "%s", t);
+
     printf("done\n");
 }
 

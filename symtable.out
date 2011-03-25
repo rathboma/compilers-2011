@@ -1,10 +1,11 @@
 p 
 m in
-z in
+z s
 integer 
 in integer
 string 
 s string
 errorfree 
+z in
 7
 5
