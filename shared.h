@@ -3,13 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-void yyerror(char* message){
-    printf("%s\n", message);
-    exit(1);
-}
-
-
 typedef struct s_entry * symbol_entry;
 
 struct s_entry{

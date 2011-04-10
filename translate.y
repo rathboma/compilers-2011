@@ -57,7 +57,7 @@
     int intVal;
     double doubleVal;
     char* strVal;
-    symbol_entry table;
+    token chain;
 }
 
 %%
@@ -88,31 +88,23 @@ identifierList:
         ID multiIds
         {
             //printf("identifierList!");
-            $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
             
-            $<table>$->symbol = (char*)calloc(strlen($<table>1->symbol) + 1, sizeof(char));
+            $<chain>$ = $<chain>2 ? $<chain>2 : (token) malloc(sizeof(struct token_struct));
+                        
+            addToChain($<chain>$, $<strVal>1);
             
-            strcpy($<table>$->symbol, $<table>1->symbol);
-            if($<table>2) {
-                //printf("joining chain\n");
-                //printf("next value: '%s'\n", $<table>2->symbol);
-                $<table>$->next = $<table>2;
-                }
-            
-
             reg("identifierList");
-            
         }
         ;
 multiIds: SEPARATOR identifierList
         {
-            $<table>$ = $<table>2;
+            $<chain>$ = $<chain>2;
 
         }
         | /*empty*/
         {
 
-            $<table>$ = NULL;
+            $<chain>$ = NULL;
         }
         ;
 subprogramDeclarations:
@@ -158,7 +150,13 @@ block:  variableDeclarations compoundStatement
 paramDeclare:
     identifierList DECLARE type
     {
+        token t = $<chain>1;
+        while(t){
+            installSymbol(t->value, $<strVal>3);
+            t = t->next;
+        }
         updateAll($<table>1, $<table>3->symbol);
+        char* representation = stringify_params($<chain>1, type);
     }
     ;
 
@@ -316,6 +314,7 @@ mulOp:
 sign:
     ADDOP {reg("sign");} | /*empty*/
     ;
+    
 typeDefinitions: TYPE multipleTypeDefs
             {reg("typeDefinitions");}
             | /*empty*/
@@ -328,24 +327,23 @@ typeDefinition:
         ID EQUALS type EOL
             {   //printf("typeDefinition for %s, type = %s\n", $<table>1->symbol, $<table>3->symbol);
                 reg("typeDefinition");
-                updateSymbolTable($<table>1->symbol, $<table>3->symbol);
+                installSymbol(currentSymbolTable, $<strVal>1, $<strVal>3);
              }
         ;
 
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
-            {reg("type"); 
-                $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-                $<table>$->symbol = calloc(strlen("array of ") + strlen($<table>8->symbol) + 1, sizeof(char));
-                sprintf($<table>$->symbol, "%s%s", "array of ", $<table>8->symbol);
+            {reg("type");
+                char typeDef[100];
+                sprintf(typeDef, "a %d %d %s", $<intVal>3, $<intVal>5, $<strVal>8)
+                
+                $<strVal>$ = calloc(strlen(typeDef), sizeof(char));
+                strcpy($<strVal>$, typeDef);
+                installType($<strval>$);
                 }
         | RECORD fieldList END
             {
                 reg("type"); 
-                $<table>$ = (symbol_entry) malloc(sizeof(struct s_entry));
-                char* joined = join($<table>2);
-                //printf("joined: %s\n", joined);
-                $<table>$->symbol = (char*) calloc(strlen("record containing ") + strlen(joined) + 1, sizeof(char));
-                sprintf($<table>$->symbol, "%s%s", "record containing ", joined);
+                //example: $<strVal>$ = "r a:integer,b:integer,c:integer,d:a 1 100 integer"
             }
         | ID
         {

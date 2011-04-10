@@ -4,7 +4,8 @@
 /* need this for the call to atof() below */
 #include <math.h>
 #include <string.h>
-#include "shared.h"
+#include "symbol_table.h"
+#include "helpers.h"
 #include "translate.tab.h"
 // SYMBOL DECLARATIONS
 // and begin forward div do else end for function if array mod not of 
@@ -70,9 +71,9 @@ string_literal 	\"[^"]*\"
 
 
 {ws}|{comment}      {/* do nothing*/}
-{id}                {yylval.table = installID(); return(ID);}
-{int}               {yylval.table = installNum(); return(INT);}
-{float}            {yylval.table = installNum(); return(FLOAT);}
+{id}                {yylval.strVal = yytext; return(ID);}
+{int}               {yylval.intVal = atoi(yytext); return(INT);}
+{float}            {yylval.doubleVal = atof(yytext); return(FLOAT);}
 {string_literal}    {yylval.strVal = yytext; return(STRING_LITERAL);}
 
 %%
