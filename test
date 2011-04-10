@@ -1,0 +1,3 @@
+#! /usr/bin/env bash
+gcc symbol_table_tests.c -o tp
+./tp

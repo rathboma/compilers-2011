@@ -4,4 +4,5 @@ lex.yy.c
 lexer
 *.c
 translate*.h
-a.out
+*.out
+tp
