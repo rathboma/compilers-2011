@@ -21,11 +21,12 @@ void addToChain(token t, char* nextValue){
     strcpy(t->next->value, nextValue);
 }
 
-void stringify_params(char* result, token, char* tpe){
+char * stringify_params(token tok, char* tpe){
     int length = 0;
-    t = token;
+    token t = tok;
     while(t){length += strlen(t->value); t = t->next;}
-    result = calloc(length + 1, sizeof(char));
-    //append all token string together here somehow.
-    
+    char* result = calloc(length + 1, sizeof(char));
+    t = tok;
+    while(t){sprintf(result, "%s%s", result, t->value); t = t->next;}
+    return(result);
 }

@@ -58,6 +58,7 @@
     double doubleVal;
     char* strVal;
     token chain;
+    type_entry type;
 }
 
 %%
@@ -155,8 +156,7 @@ paramDeclare:
             installSymbol(t->value, $<strVal>3);
             t = t->next;
         }
-        updateAll($<table>1, $<table>3->symbol);
-        char* representation = stringify_params($<chain>1, type);
+        $<strVal>$ = stringify_params($<chain>1, type);
     }
     ;
 
@@ -226,7 +226,17 @@ simpleStatement:
     ;
 assignmentStatement:
         variable ASSIGNMENT expression
-            {reg("assignmentStatement");}
+            {
+                symbol_entry variable = getEntry($<strVal>1);
+                
+                
+                if($<strVal>3){
+                    checkTypes($<strVal>1, $<strVal>3);
+                }else if($<intVal>3){
+                    checkNumeric($<strVal>1);
+                }
+                
+            }
         ;
 procedureStatement:
         ID PAREN_L actualParameterList PAREN_R
@@ -260,6 +270,10 @@ expression:
         {reg("expression");}
     ;
     
+simpleExpression:
+    sign term addOpTerm
+        {reg("simpleExpression");}
+    ;
 addOpTerm:
     addOp term addOpTerm
     | /*empty*/
@@ -277,12 +291,26 @@ term:
         {reg("term");}
     ;
 factorOptions:
-    INT 
+    INT
+    {
+        $<type>$ = &installNumber($<intVal>$)->type_pointer;
+        
+    } 
     | STRING_LITERAL
-    | variable 
-    | functionReference 
-    | NOT factor 
+    {
+        $<type>$ = &installSymbol(currentSymbolTable, $<strVal>1, "string")->type_pointer;
+    }
+    | variable
+    | functionReference
+    | NOT factor
+    {
+        $<intVal>$ = $<intVal>2);
+        $<strVal>$ = $<strVal>2;
+    } 
     | PAREN_L expression PAREN_R
+    {
+        
+    }
     ;
 factor:
     factorOptions
@@ -293,10 +321,7 @@ functionReference:
         {reg("functionReference");}
     ;
 
-simpleExpression:
-    sign term addOpTerm
-        {reg("simpleExpression");}
-    ;
+
 addOp:
     ADDOP 
         {reg("addOp");}

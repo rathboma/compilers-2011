@@ -13,6 +13,7 @@ struct tentry{
 typedef struct s_entry * symbol_entry;
 struct s_entry{
     char* symbol;
+    int intVal;
     type_entry type_pointer;
     symbol_entry next;
     };
@@ -77,6 +78,21 @@ symbol_entry findSymbol(table t, char* value, int searchParents){
     }
     if(searchParents && t->parent) return findSymbol(t->parent, value, searchParents);
     return(NULL);
+}
+
+symbol_entry installNumber(int value){
+    symbol_entry entry = number_table->head;
+    symbol_entry newt = malloc(sizeof(struct s_entry));
+    if(!entry){
+        number_table->head = newt;
+
+    }else{
+        while(entry->next){entry = entry->next;}
+        entry->next = newt;
+    }
+    
+    newt->intVal = value;
+    newt->type_pointer = resolveType(currentSymbolTable, "integer");
 }
 
 symbol_entry installSymbol(table t, char* value, char* symbol_type)
