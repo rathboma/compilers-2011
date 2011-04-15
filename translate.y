@@ -622,6 +622,9 @@ char **argv;
     ++argv, --argc;  /* skip over program name */
     installType("integer");
     installType("string");
+    type_entry t = installType("boolean");
+    installSymbol(currentSymbolTable, "true", t, BASICSYM);
+    installSymbol(currentSymbolTable, "false", t, BASICSYM);
     if ( argc == 0 ) exit(1);
             
     yyin = fopen( argv[0], "r" );
