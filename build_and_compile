@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-rm -rf *.o *.c translate.tab.h
+rm -rf *.o lex**.c translate.tab.h
 bison -d translate.y
 flex expressions.lex
 bison translate.y

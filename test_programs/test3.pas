@@ -8,12 +8,11 @@ type
 	s = string;
 	in = integer;
 var
-	z : s;
+	z : in;
 	m : in;
-	z : in;  {error: multiple declaration}
 
 begin
 	z := 5;
 	m := 7;
-      p := m; {error: undeclared variable}	
+    p := m; {error: undeclared variable}	
 end.

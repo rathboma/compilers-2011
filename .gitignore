@@ -2,7 +2,8 @@
 *.zip
 lex.yy.c
 lexer
-*.c
+lex*.c
+translate.tab.c
 translate*.h
 *.out
 tp

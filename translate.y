@@ -79,21 +79,23 @@ multiVarDeclarations:
         ;
 variableDeclaration:
         identifierList DECLARE type
-            {
-                updateAll($<table>1, $<table>3->symbol);
-                reg("variableDeclaration");
+        {
+            token t = $<chain>1;
+            while(t){
+                installSymbol(currentSymbolTable, t->value, $<type>3, BASICSYM);
+                t = t->next;
             }
+        }
         ;
         
 identifierList:
         ID multiIds
         {
-            //printf("identifierList!");
             
-            $<chain>$ = $<chain>2 ? $<chain>2 : (token) malloc(sizeof(struct token_struct));
-                        
-            addToChain($<chain>$, $<strVal>1);
-            
+            $<chain>$ = (token) malloc(sizeof(struct token_struct));
+            $<chain>$->value = calloc(strlen($<strVal>1), sizeof(char));
+            strcpy($<chain>$->value, $<strVal>1 );
+            $<chain>$->next = $<chain>2;
             reg("identifierList");
         }
         ;
@@ -112,70 +114,145 @@ subprogramDeclarations:
         procedureDeclaration EOL subprogramDeclarations
             {reg("subprogramDeclarations");}
         | functionDeclaration EOL subprogramDeclarations
-            {reg("subprogramDeclarations");}
+            {reg("subprogramDeclarations (function)");}
         | /*empty*/
         ;
 functionDeclaration: 
-        FUNC ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
+        func ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
         {
+            printf("function.\n");
+            token t = $<chain>4;
             
-            int args = lengthOf($<table>4);
-            char asString[(args % 10) + 1];
-            sprintf(asString, "%d", args);
-            updateSymbolTable($<table>2->symbol, asString);
-            reg("functionDeclaration");
+            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<type>7, FUNCTIONSYM);
+            printf("installed symbol entry for function %s\n", func->symbol );
+
+            func->numParameters = lengthOf(t);
+            printf("number of parameters: %d\n", func->numParameters);
+            func->innerScope = currentSymbolTable;
+            int i = 0;
+            while(t){
+
+                symbol_entry s = findSymbol(currentSymbolTable, t->value, 0, BASICSYM);
+                printf("adding symbol entry to parameters list: %s\n", s->symbol );
+                func->parameters[i] = s;
+                i++;
+                t = t->next;
+            }
+            $<type>$ = $<type>7;
+            retreat();
+            
+            //formalParameterList = list of tokens
+            //add them all to the symbol table
+            // add each symbol to the params array
+            //retreat();
+            
         }
         ;
 resultType:
     ID
-    {reg("resultType");}
+    {
+        $<type>$ = resolveType(currentSymbolTable->parent, $<strVal>1);
+        reg("resultType");
+    }
     ;
-        
+func:
+FUNC
+{
+    advance();
+}
+;
+proc:
+PROCEDURE
+{
+    advance();
+}
+;
+
 procedureDeclaration:
-        PROCEDURE ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
-        {//here we want to set the type of ID to be the length of the formalParameterList
-            int args = lengthOf($<table>4);
-            char asString[(args % 10) + 1];
-            sprintf(asString, "%d", args);
-            updateSymbolTable($<table>2->symbol, asString);
-            reg("procedureDeclaration");
+        proc ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
+        {
+            printf("procedure!");
+            token t = $<chain>4;
+            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<type>7, PROCEDURESYM);
+            func->numParameters = lengthOf(t);
+            func->innerScope = currentSymbolTable;
+            int i = 0;
+            while(t){
+                symbol_entry s = findSymbol(currentSymbolTable, t->value, 0, BASICSYM);
+                func->parameters[i] = s;
+                i++;
+                t = t->next;
+            }
+            $<type>$ = NULL;
+            retreat();
+            
+            //formalParameterList = list of tokens
+            //add them all to the symbol table
+            // add each symbol to the params array
+            //retreat();
+            
             }
         ;
 blockOrForward:
-    block | FORWARD
+    block 
+    {
+        reg("block or forward");
+    }
+    | FORWARD
+    {
+        
+    }
     ;
     
 block:  variableDeclarations compoundStatement
-    {reg("block");}
-
+    {
+        reg("block");
+    }
+;
 paramDeclare:
     identifierList DECLARE type
     {
         token t = $<chain>1;
         while(t){
-            installSymbol(t->value, $<strVal>3);
+            
+            installSymbol(currentSymbolTable, t->value, $<type>3, BASICSYM);
+            
             t = t->next;
         }
-        $<strVal>$ = stringify_params($<chain>1, type);
+
+        $<chain>$ = $<chain>1;
+        printTokenChain($<chain>$);
     }
     ;
 
 paramList:
         paramList EOL paramDeclare
-        {}
+        {
+            $<chain>$ = $<chain>1;
+            token t = $<chain>1;
+            while(t->next){t = t->next;}
+            t->next = $<chain>3;
+        }
         | paramDeclare 
-        {$<intVal>$ = $<intVal>1;}
+        {$<chain>$ = $<chain>1;}
         ;
 formalParameterList:
         paramList 
-        {reg("formalParameterList");}
+        {
+            $<chain>$ = $<chain>1;
+            reg("formalParameterList");
+        }
         | /*empty*/
-        {$<intVal>$ = 0;}
+        {
+            $<chain>$ = NULL;
+        }
         ;
 
 compoundStatement:
-        BGN statementSequence END
-        {reg("compoundStatement");}
+        BGN statementSequence endOfBlock
+        {
+            reg("compoundStatement");   
+        }
         ;
 
 statementSequence:
@@ -227,56 +304,140 @@ simpleStatement:
 assignmentStatement:
         variable ASSIGNMENT expression
             {
-                symbol_entry variable = getEntry($<strVal>1);
-                
-                
-                if($<strVal>3){
-                    checkTypes($<strVal>1, $<strVal>3);
-                }else if($<intVal>3){
-                    checkNumeric($<strVal>1);
+                reg("assignment");
+                type_entry a = $<type>1;
+                type_entry b = $<type>3;
+                if(a != b){
+                    printf("BOOM! type chash: %s does not match type %s\n", a->name, b->name);
+                    yyerror("type clash");
+                    YYERROR;
                 }
                 
             }
         ;
 procedureStatement:
         ID PAREN_L actualParameterList PAREN_R
-        {reg("procedureStatement");}
+        {
+            
+            symbol_entry s = findSymbol(currentSymbolTable, $<strVal>1, 1, PROCEDURESYM);
+            if(!s) s = findSymbol(currentSymbolTable, $<strVal>1, 1, FUNCTIONSYM);
+            if(!s){
+                printf("couldn't find procedure %s\n'", $<strVal>1 );
+                yyerror("undeclared procedure called");
+                YYERROR;
+            }
+            
+            if(lengthOf($<chain>3) != s->numParameters){
+                yyerror("wrong number of parameters");
+                YYERROR;
+            }
+            token t = $<chain>3;
+            int i = 0;
+            for(i = 0; i < s->numParameters; i++){
+                type_entry actual = resolveType(currentSymbolTable, t->value);
+                type_entry declared = s->parameters[i]->type_pointer;
+                if(actual != declared){
+                    yyerror("procedure argument is of the wrong type");
+                    YYERROR;
+                }
+                t = t->next;
+            }
+        }
         ;
 apList:
         expression SEPARATOR apList
+        {
+            $<chain>$ = (token) malloc(sizeof(struct token_struct));
+            $<chain>$->value = $<type>1->name;
+            $<chain>$->next = $<chain>3;
+        }
         | expression
+        {
+            $<chain>$ = (token) malloc(sizeof(struct token_struct));
+            $<chain>$->value = $<type>1->name;
+        }
         ;
 actualParameterList:
         apList 
-        {reg("actualParameterList");}
+        {
+            $<chain>$ = $<chain>1;
+        }
         | /*empty*/
+        {
+            $<chain>$ = NULL;
+        }
         ;
         
 variable:
     ID componentSelection
-    {reg("variable");}
+    {
+        // id
+        // record.id
+        // record[32].id
+        // record.record.id
+        $<type>$ = resolveStructuredType(currentSymbolTable, $<strVal>1, $<chain>2);
+    }
     ;
 componentSelection:
     STOP ID componentSelection
-        {reg("componentSelection");}
+        {
+            $<chain>$ = (token) malloc(sizeof(struct token_struct));
+            $<chain>$->value = (char*)calloc(strlen($<strVal>2), sizeof(char));
+            sprintf($<chain>$->value, "%s", $<strVal>2);
+            $<chain>$->next = $<chain>3;
+        }
     | ARRAY_L expression ARRAY_R componentSelection
-        {reg("componentSelection");}
+        {
+            if(strcmp($<type>2->name, "integer") != 0){
+                yyerror("expression in array parens is not integer");
+                YYERROR;
+            }
+            $<chain>$ = (token)malloc(sizeof(struct token_struct));
+            $<chain>$->value = (char*)calloc(strlen("array"), sizeof(char));
+            sprintf($<chain>$->value, "array");
+        }
     | /*empty*/
+    {$<chain>$ = NULL;}
     ;
 expression:
     simpleExpression relationalOp simpleExpression
-        {reg("expression");}
+        {
+            reg("expression");
+            
+            $<type>$ = $<type>1;
+            if($<type>1 != $<type>3){
+                yyerror("types don't match (expression)");
+            }
+            
+            
+            }
     | simpleExpression
-        {reg("expression");}
+        {
+            reg("expression");
+            $<type>$ = $<type>1;
+            }
     ;
     
 simpleExpression:
     sign term addOpTerm
-        {reg("simpleExpression");}
+        {
+            reg("simpleExpression");
+            $<type>$ = $<type>2;
+            if($<type>3 && $<type>2 != $<type>3){
+                yyerror("type mismatch (addOpTerm)");
+            }            
+        }
     ;
 addOpTerm:
     addOp term addOpTerm
+    {
+        $<type>$ = $<type>2;
+        if($<type>3 && $<type>2 != $<type>3){
+            yyerror("type mismatch (addOpTerm)");
+        }
+    }
     | /*empty*/
+    {$<type>$ = NULL;}
     ;
 relationalOp:
     RELATIONAL | EQUALS
@@ -284,41 +445,93 @@ relationalOp:
     ;
 mulOpFactor:
     mulOp factor mulOpFactor
+    {
+        $<type>$ = $<type>2;
+        if($<type>3 && $<type>2 != $<type>3){
+            yyerror("Incompatible types detected (mulOp factor mulOpFactor)");
+            YYERROR;
+        }
+        
+    }
     | /*empty*/
+    {
+        $<type>$ = NULL;
+    }
     ;
 term:
     factor mulOpFactor
-        {reg("term");}
+        {
+            reg("term");
+            $<type>$ = $<type>1;
+            if($<type>2 && $<type>1 != $<type>2){
+                yyerror("Incompatible types detected (factor mulOpFactor)");
+                YYERROR;
+            }
+        }
     ;
 factorOptions:
     INT
     {
-        $<type>$ = &installNumber($<intVal>$)->type_pointer;
+        $<type>$ = installNumber($<intVal>$)->type_pointer;
         
     } 
     | STRING_LITERAL
     {
-        $<type>$ = &installSymbol(currentSymbolTable, $<strVal>1, "string")->type_pointer;
+        $<type>$ = resolveType(currentSymbolTable, "string");
     }
     | variable
+    {
+        $<type>$ = $<type>1;
+    }
     | functionReference
+    {
+        reg("factorOptions (function)");
+        $<type>$ = $<type>1;
+    }
     | NOT factor
     {
-        $<intVal>$ = $<intVal>2);
-        $<strVal>$ = $<strVal>2;
+        $<type>$ = $<type>2;
     } 
     | PAREN_L expression PAREN_R
     {
-        
+        $<type>$ = $<type>2;
     }
     ;
 factor:
     factorOptions
-        {reg("factor");}
+        {
+            reg("factor");
+            $<type>$ = $<type>1;
+        }
     ;
 functionReference:
     ID PAREN_L actualParameterList PAREN_R
-        {reg("functionReference");}
+        {
+            reg("functionReference");
+            symbol_entry s = findSymbol(currentSymbolTable, $<strVal>1, 1, FUNCTIONSYM);
+                  if(!s){
+                      yyerror("undeclared function called");
+                      YYERROR;
+                  }
+                  
+                  if(lengthOf($<chain>3) != s->numParameters){
+                      yyerror("wrong number of parameters");
+                      YYERROR;
+                  }
+                  token t = $<chain>3;
+                  int i = 0;
+                  for(i = 0; i < s->numParameters; i++){
+                      printf("function call checking on %s\n", t->value);
+                      type_entry actual = resolveType(currentSymbolTable, t->value);
+                      type_entry declared = s->parameters[i]->type_pointer;
+                      if(actual != declared){
+                          yyerror("procedure argument is of the wrong type");
+                          YYERROR;
+                      }
+                      t = t->next;
+                  }
+                  $<type>$ = s->type_pointer;            
+        }
     ;
 
 
@@ -350,43 +563,51 @@ multipleTypeDefs: typeDefinition multipleTypeDefs
 
 typeDefinition:
         ID EQUALS type EOL
-            {   //printf("typeDefinition for %s, type = %s\n", $<table>1->symbol, $<table>3->symbol);
+            {   
                 reg("typeDefinition");
-                installSymbol(currentSymbolTable, $<strVal>1, $<strVal>3);
+                installSymbol(currentSymbolTable, $<strVal>1, $<type>3, BASICSYM);
              }
         ;
 
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
             {reg("type");
-                char typeDef[100];
-                sprintf(typeDef, "a %d %d %s", $<intVal>3, $<intVal>5, $<strVal>8)
-                
-                $<strVal>$ = calloc(strlen(typeDef), sizeof(char));
-                strcpy($<strVal>$, typeDef);
-                installType($<strval>$);
+                $<type>$ = $<type>8;
                 }
-        | RECORD fieldList END
+        | RECORD fieldList endOfBlock
             {
-                reg("type"); 
-                //example: $<strVal>$ = "r a:integer,b:integer,c:integer,d:a 1 100 integer"
+                reg("type");
+                
+                type_entry t = installType("record");
+                t->scopedFields = currentSymbolTable;
+                $<type>$ = t;
+                retreat();
             }
         | ID
         {
-            reg("type");
-            
+            $<type>$ = resolveType(currentSymbolTable, $<strVal>1);
+            if(!$<type>$){
+                yyerror("type not found (type: ID)");
+                YYERROR;
+            }
             }
         ;
 
 fieldList:
     paramDeclare EOL fieldList
     {   
-        $<table>$ = $<table>1;
-        $<table>$->next = $<table>3;
-        reg("fieldList");   
+        $<chain>$ = $<chain>1;
+        token t = $<chain>1;
+        while(t){t = t->next;}
+        t->next = $<chain>3;
     }
     | paramDeclare
     {
-        reg("fieldList");
+        $<chain>$ = $<chain>1;
+    }
+    ;
+endOfBlock:
+    END
+    {
     }
     ;
 
@@ -399,7 +620,8 @@ int argc;
 char **argv;
     {
     ++argv, --argc;  /* skip over program name */
-    
+    installType("integer");
+    installType("string");
     if ( argc == 0 ) exit(1);
             
     yyin = fopen( argv[0], "r" );
@@ -410,8 +632,8 @@ char **argv;
 
     fclose(yyin);
     printf("printing symbol table to symtable.out\n");
-    printSymbolTables("symtable.out");
-    printParseTable("rules.out");
+//    printSymbolTables("symtable.out");
+//    printParseTable("rules.out");
 }
 
 

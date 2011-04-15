@@ -5,23 +5,15 @@
 program lexer_test;
 
 type
-  ifthenelse = integer;
-
+    s = string;
 var
-  i : integer;
-  b : boolean;
-
-function foo(x : integer) : i; forward;
-
-procedure bar(x : int); forward;
+    	z : s;
+    	b : s;
+function foo1(a : integer) : b;
+begin
+   a := 0
+end;
 
 begin
-  int := 0;
-  i := int;
-  i := integer;
-  integer := 0;
-  false := b;
-  true := b and false;
-  bar(int);
-  bar(integer)
+    z := foo1(1)
 end.
