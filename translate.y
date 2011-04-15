@@ -171,9 +171,8 @@ PROCEDURE
 procedureDeclaration:
         proc ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
         {
-            printf("procedure!");
             token t = $<chain>4;
-            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<type>7, PROCEDURESYM);
+            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, NULL, PROCEDURESYM);
             func->numParameters = lengthOf(t);
             func->innerScope = currentSymbolTable;
             int i = 0;
@@ -183,6 +182,7 @@ procedureDeclaration:
                 i++;
                 t = t->next;
             }
+            printf("done");
             $<type>$ = NULL;
             retreat();
             

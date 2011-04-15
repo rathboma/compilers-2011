@@ -185,7 +185,7 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     // 5. if not, search table and parents to resolve type
     // 6. if type resolved, add, otherwise, error
     
-    printf("installing symbol '%s' of type %s\n", value, theType->name);
+    printf("installing symbol '%s'\n", value);
     //first see if the symbol already exists
     symbol_entry existing = findSymbol(t, value, 0, symbolType);
     if(existing) {
