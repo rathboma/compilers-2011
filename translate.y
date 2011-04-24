@@ -569,14 +569,19 @@ typeDefinition:
              }
         ;
 
+rec: RECORD
+    {
+        advance();
+    }
+;
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
             {reg("type");
                 $<type>$ = $<type>8;
                 }
-        | RECORD fieldList endOfBlock
+        | rec fieldList endOfBlock
             {
-                reg("type");
                 
+                reg("type");
                 type_entry t = installType("record");
                 t->scopedFields = currentSymbolTable;
                 $<type>$ = t;
@@ -594,10 +599,10 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
 
 fieldList:
     paramDeclare EOL fieldList
-    {   
+    {   reg("fieldList");
         $<chain>$ = $<chain>1;
         token t = $<chain>1;
-        while(t){t = t->next;}
+        while(t->next){t = t->next;}
         t->next = $<chain>3;
     }
     | paramDeclare
