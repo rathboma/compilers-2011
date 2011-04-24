@@ -6,14 +6,14 @@ program lexer_test;
 
 type
     s = string;
+    p = record
+        a: integer;
+        b: string
+    end;
 var
-    	z : s;
-    	b : s;
-function foo1(a : integer) : b;
+        foo: string;
+    	moo : p;
 begin
-   a := 0
-end;
-
-begin
-    z := foo1(1)
+    foo := "hello";
+    moo.a := foo;
 end.
