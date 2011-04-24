@@ -137,14 +137,16 @@ Grammar
 
    83 typeDefinition: ID EQUALS type EOL
 
-   84 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
-   85     | RECORD fieldList endOfBlock
-   86     | ID
+   84 rec: RECORD
 
-   87 fieldList: paramDeclare EOL fieldList
-   88          | paramDeclare
+   85 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
+   86     | rec fieldList endOfBlock
+   87     | ID
 
-   89 endOfBlock: END
+   88 fieldList: paramDeclare EOL fieldList
+   89          | paramDeclare
+
+   90 endOfBlock: END
 
 
 Terminals, with rules where they appear
@@ -157,18 +159,18 @@ FORWARD (260) 19
 DIV (261)
 DO (262) 33 34
 ELSE (263) 36 38
-END (264) 89
+END (264) 90
 FOR (265) 33
 FUNC (266) 15
 IF (267) 35 36 38
-ARRAY (268) 84
+ARRAY (268) 85
 MOD (269) 75
 NOT (270) 68
-OF (271) 84
+OF (271) 85
 OR (272) 73
 PROCEDURE (273) 16
 PROGRAM (274) 1
-RECORD (275) 85
+RECORD (275) 84
 THEN (276) 35 36 38
 TO (277) 33
 TYPE (278) 79
@@ -181,16 +183,16 @@ EQUALS (284) 60 83
 STOP (285) 1 51
 SEPARATOR (286) 8 46
 DECLARE (287) 6 13 21
-EOL (288) 1 4 5 10 11 13 17 22 27 83 87
+EOL (288) 1 4 5 10 11 13 17 22 27 83 88
 ASSIGNMENT (289) 33 44
-RANGE (290) 84
+RANGE (290) 85
 PAREN_L (291) 13 17 45 69 71
 PAREN_R (292) 13 17 45 69 71
-ARRAY_L (293) 52 84
-ARRAY_R (294) 52 84
+ARRAY_L (293) 52 85
+ARRAY_R (294) 52 85
 FLOAT (295)
-INT (296) 64 84
-ID (297) 1 7 13 14 17 33 45 50 51 71 83 86
+INT (296) 64 85
+ID (297) 1 7 13 14 17 33 45 50 51 71 83 87
 STRING_LITERAL (298) 65
 
 
@@ -227,7 +229,7 @@ blockOrForward (57)
 block (58)
     on left: 20, on right: 18
 paramDeclare (59)
-    on left: 21, on right: 22 23 87 88
+    on left: 21, on right: 22 23 88 89
 paramList (60)
     on left: 22 23, on right: 22 24
 formalParameterList (61)
@@ -290,12 +292,14 @@ multipleTypeDefs (89)
     on left: 81 82, on right: 79 81
 typeDefinition (90)
     on left: 83, on right: 81
-type (91)
-    on left: 84 85 86, on right: 6 21 83 84
-fieldList (92)
-    on left: 87 88, on right: 85 87
-endOfBlock (93)
-    on left: 89, on right: 26 85
+rec (91)
+    on left: 84, on right: 86
+type (92)
+    on left: 85 86 87, on right: 6 21 83 85
+fieldList (93)
+    on left: 88 89, on right: 86 88
+endOfBlock (94)
+    on left: 90, on right: 26 86
 
 
 state 0
@@ -430,7 +434,8 @@ state 13
     RECORD  shift, and go to state 27
     ID      shift, and go to state 28
 
-    type  go to state 29
+    rec   go to state 29
+    type  go to state 30
 
 
 state 14
@@ -444,11 +449,11 @@ state 15
 
     7 identifierList: ID . multiIds
 
-    SEPARATOR  shift, and go to state 30
+    SEPARATOR  shift, and go to state 31
 
     $default  reduce using rule 9 (multiIds)
 
-    multiIds  go to state 31
+    multiIds  go to state 32
 
 
 state 16
@@ -463,14 +468,14 @@ state 17
     4 multiVarDeclarations: variableDeclaration . EOL multiVarDeclarations
     5                     | variableDeclaration . EOL
 
-    EOL  shift, and go to state 32
+    EOL  shift, and go to state 33
 
 
 state 18
 
     6 variableDeclaration: identifierList . DECLARE type
 
-    DECLARE  shift, and go to state 33
+    DECLARE  shift, and go to state 34
 
 
 state 19
@@ -491,88 +496,95 @@ state 21
 
     1 program: PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations . compoundStatement STOP
 
-    BGN  shift, and go to state 34
+    BGN  shift, and go to state 35
 
-    compoundStatement  go to state 35
+    compoundStatement  go to state 36
 
 
 state 22
 
    11 subprogramDeclarations: functionDeclaration . EOL subprogramDeclarations
 
-    EOL  shift, and go to state 36
+    EOL  shift, and go to state 37
 
 
 state 23
 
    13 functionDeclaration: func . ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
 
-    ID  shift, and go to state 37
+    ID  shift, and go to state 38
 
 
 state 24
 
    17 procedureDeclaration: proc . ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
 
-    ID  shift, and go to state 38
+    ID  shift, and go to state 39
 
 
 state 25
 
    10 subprogramDeclarations: procedureDeclaration . EOL subprogramDeclarations
 
-    EOL  shift, and go to state 39
+    EOL  shift, and go to state 40
 
 
 state 26
 
-   84 type: ARRAY . ARRAY_L INT RANGE INT ARRAY_R OF type
+   85 type: ARRAY . ARRAY_L INT RANGE INT ARRAY_R OF type
 
-    ARRAY_L  shift, and go to state 40
+    ARRAY_L  shift, and go to state 41
 
 
 state 27
 
-   85 type: RECORD . fieldList endOfBlock
+   84 rec: RECORD .
 
-    ID  shift, and go to state 15
-
-    identifierList  go to state 41
-    paramDeclare    go to state 42
-    fieldList       go to state 43
+    $default  reduce using rule 84 (rec)
 
 
 state 28
 
-   86 type: ID .
+   87 type: ID .
 
-    $default  reduce using rule 86 (type)
+    $default  reduce using rule 87 (type)
 
 
 state 29
 
-   83 typeDefinition: ID EQUALS type . EOL
+   86 type: rec . fieldList endOfBlock
 
-    EOL  shift, and go to state 44
+    ID  shift, and go to state 15
+
+    identifierList  go to state 42
+    paramDeclare    go to state 43
+    fieldList       go to state 44
 
 
 state 30
+
+   83 typeDefinition: ID EQUALS type . EOL
+
+    EOL  shift, and go to state 45
+
+
+state 31
 
     8 multiIds: SEPARATOR . identifierList
 
     ID  shift, and go to state 15
 
-    identifierList  go to state 45
+    identifierList  go to state 46
 
 
-state 31
+state 32
 
     7 identifierList: ID multiIds .
 
     $default  reduce using rule 7 (identifierList)
 
 
-state 32
+state 33
 
     4 multiVarDeclarations: variableDeclaration EOL . multiVarDeclarations
     5                     | variableDeclaration EOL .
@@ -581,12 +593,12 @@ state 32
 
     $default  reduce using rule 5 (multiVarDeclarations)
 
-    multiVarDeclarations  go to state 46
+    multiVarDeclarations  go to state 47
     variableDeclaration   go to state 17
     identifierList        go to state 18
 
 
-state 33
+state 34
 
     6 variableDeclaration: identifierList DECLARE . type
 
@@ -594,42 +606,43 @@ state 33
     RECORD  shift, and go to state 27
     ID      shift, and go to state 28
 
-    type  go to state 47
-
-
-state 34
-
-   26 compoundStatement: BGN . statementSequence endOfBlock
-
-    BGN    shift, and go to state 34
-    FOR    shift, and go to state 48
-    IF     shift, and go to state 49
-    WHILE  shift, and go to state 50
-    ID     shift, and go to state 51
-
-    $default  reduce using rule 43 (simpleStatement)
-
-    compoundStatement    go to state 52
-    statementSequence    go to state 53
-    statement            go to state 54
-    otherStatements      go to state 55
-    loopHeader           go to state 56
-    open                 go to state 57
-    matched              go to state 58
-    simpleStatement      go to state 59
-    assignmentStatement  go to state 60
-    procedureStatement   go to state 61
-    variable             go to state 62
+    rec   go to state 29
+    type  go to state 48
 
 
 state 35
 
-    1 program: PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement . STOP
+   26 compoundStatement: BGN . statementSequence endOfBlock
 
-    STOP  shift, and go to state 63
+    BGN    shift, and go to state 35
+    FOR    shift, and go to state 49
+    IF     shift, and go to state 50
+    WHILE  shift, and go to state 51
+    ID     shift, and go to state 52
+
+    $default  reduce using rule 43 (simpleStatement)
+
+    compoundStatement    go to state 53
+    statementSequence    go to state 54
+    statement            go to state 55
+    otherStatements      go to state 56
+    loopHeader           go to state 57
+    open                 go to state 58
+    matched              go to state 59
+    simpleStatement      go to state 60
+    assignmentStatement  go to state 61
+    procedureStatement   go to state 62
+    variable             go to state 63
 
 
 state 36
+
+    1 program: PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement . STOP
+
+    STOP  shift, and go to state 64
+
+
+state 37
 
    11 subprogramDeclarations: functionDeclaration EOL . subprogramDeclarations
 
@@ -638,28 +651,28 @@ state 36
 
     $default  reduce using rule 12 (subprogramDeclarations)
 
-    subprogramDeclarations  go to state 64
+    subprogramDeclarations  go to state 65
     functionDeclaration     go to state 22
     func                    go to state 23
     proc                    go to state 24
     procedureDeclaration    go to state 25
 
 
-state 37
-
-   13 functionDeclaration: func ID . PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
-
-    PAREN_L  shift, and go to state 65
-
-
 state 38
 
-   17 procedureDeclaration: proc ID . PAREN_L formalParameterList PAREN_R EOL blockOrForward
+   13 functionDeclaration: func ID . PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
 
     PAREN_L  shift, and go to state 66
 
 
 state 39
+
+   17 procedureDeclaration: proc ID . PAREN_L formalParameterList PAREN_R EOL blockOrForward
+
+    PAREN_L  shift, and go to state 67
+
+
+state 40
 
    10 subprogramDeclarations: procedureDeclaration EOL . subprogramDeclarations
 
@@ -668,237 +681,237 @@ state 39
 
     $default  reduce using rule 12 (subprogramDeclarations)
 
-    subprogramDeclarations  go to state 67
+    subprogramDeclarations  go to state 68
     functionDeclaration     go to state 22
     func                    go to state 23
     proc                    go to state 24
     procedureDeclaration    go to state 25
 
 
-state 40
-
-   84 type: ARRAY ARRAY_L . INT RANGE INT ARRAY_R OF type
-
-    INT  shift, and go to state 68
-
-
 state 41
 
-   21 paramDeclare: identifierList . DECLARE type
+   85 type: ARRAY ARRAY_L . INT RANGE INT ARRAY_R OF type
 
-    DECLARE  shift, and go to state 69
+    INT  shift, and go to state 69
 
 
 state 42
 
-   87 fieldList: paramDeclare . EOL fieldList
-   88          | paramDeclare .
+   21 paramDeclare: identifierList . DECLARE type
 
-    EOL  shift, and go to state 70
-
-    $default  reduce using rule 88 (fieldList)
+    DECLARE  shift, and go to state 70
 
 
 state 43
 
-   85 type: RECORD fieldList . endOfBlock
+   88 fieldList: paramDeclare . EOL fieldList
+   89          | paramDeclare .
 
-    END  shift, and go to state 71
+    EOL  shift, and go to state 71
 
-    endOfBlock  go to state 72
+    $default  reduce using rule 89 (fieldList)
 
 
 state 44
+
+   86 type: rec fieldList . endOfBlock
+
+    END  shift, and go to state 72
+
+    endOfBlock  go to state 73
+
+
+state 45
 
    83 typeDefinition: ID EQUALS type EOL .
 
     $default  reduce using rule 83 (typeDefinition)
 
 
-state 45
+state 46
 
     8 multiIds: SEPARATOR identifierList .
 
     $default  reduce using rule 8 (multiIds)
 
 
-state 46
+state 47
 
     4 multiVarDeclarations: variableDeclaration EOL multiVarDeclarations .
 
     $default  reduce using rule 4 (multiVarDeclarations)
 
 
-state 47
+state 48
 
     6 variableDeclaration: identifierList DECLARE type .
 
     $default  reduce using rule 6 (variableDeclaration)
 
 
-state 48
+state 49
 
    33 loopHeader: FOR . ID ASSIGNMENT expression TO expression DO
 
-    ID  shift, and go to state 73
+    ID  shift, and go to state 74
 
 
-state 49
+state 50
 
    35 open: IF . expression THEN statement
    36     | IF . expression THEN matched ELSE open
    38 matched: IF . expression THEN matched ELSE matched
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
     $default  reduce using rule 78 (sign)
 
-    expression        go to state 75
-    simpleExpression  go to state 76
-    sign              go to state 77
-
-
-state 50
-
-   34 loopHeader: WHILE . expression DO
-
-    ADDOP  shift, and go to state 74
-
-    $default  reduce using rule 78 (sign)
-
-    expression        go to state 78
-    simpleExpression  go to state 76
-    sign              go to state 77
+    expression        go to state 76
+    simpleExpression  go to state 77
+    sign              go to state 78
 
 
 state 51
 
-   45 procedureStatement: ID . PAREN_L actualParameterList PAREN_R
-   50 variable: ID . componentSelection
+   34 loopHeader: WHILE . expression DO
 
-    STOP     shift, and go to state 79
-    PAREN_L  shift, and go to state 80
-    ARRAY_L  shift, and go to state 81
+    ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 53 (componentSelection)
+    $default  reduce using rule 78 (sign)
 
-    componentSelection  go to state 82
+    expression        go to state 79
+    simpleExpression  go to state 77
+    sign              go to state 78
 
 
 state 52
+
+   45 procedureStatement: ID . PAREN_L actualParameterList PAREN_R
+   50 variable: ID . componentSelection
+
+    STOP     shift, and go to state 80
+    PAREN_L  shift, and go to state 81
+    ARRAY_L  shift, and go to state 82
+
+    $default  reduce using rule 53 (componentSelection)
+
+    componentSelection  go to state 83
+
+
+state 53
 
    31 otherStatements: compoundStatement .
 
     $default  reduce using rule 31 (otherStatements)
 
 
-state 53
+state 54
 
    26 compoundStatement: BGN statementSequence . endOfBlock
 
-    END  shift, and go to state 71
+    END  shift, and go to state 72
 
-    endOfBlock  go to state 83
+    endOfBlock  go to state 84
 
 
-state 54
+state 55
 
    27 statementSequence: statement . EOL statementSequence
    28                  | statement .
 
-    EOL  shift, and go to state 84
+    EOL  shift, and go to state 85
 
     $default  reduce using rule 28 (statementSequence)
 
 
-state 55
+state 56
 
    39 matched: otherStatements .
 
     $default  reduce using rule 39 (matched)
 
 
-state 56
+state 57
 
    37 open: loopHeader . open
    40 matched: loopHeader . matched
 
-    BGN    shift, and go to state 34
-    FOR    shift, and go to state 48
-    IF     shift, and go to state 49
-    WHILE  shift, and go to state 50
-    ID     shift, and go to state 51
+    BGN    shift, and go to state 35
+    FOR    shift, and go to state 49
+    IF     shift, and go to state 50
+    WHILE  shift, and go to state 51
+    ID     shift, and go to state 52
 
     $default  reduce using rule 43 (simpleStatement)
 
-    compoundStatement    go to state 52
-    otherStatements      go to state 55
-    loopHeader           go to state 56
-    open                 go to state 85
-    matched              go to state 86
-    simpleStatement      go to state 59
-    assignmentStatement  go to state 60
-    procedureStatement   go to state 61
-    variable             go to state 62
+    compoundStatement    go to state 53
+    otherStatements      go to state 56
+    loopHeader           go to state 57
+    open                 go to state 86
+    matched              go to state 87
+    simpleStatement      go to state 60
+    assignmentStatement  go to state 61
+    procedureStatement   go to state 62
+    variable             go to state 63
 
 
-state 57
+state 58
 
    29 statement: open .
 
     $default  reduce using rule 29 (statement)
 
 
-state 58
+state 59
 
    30 statement: matched .
 
     $default  reduce using rule 30 (statement)
 
 
-state 59
+state 60
 
    32 otherStatements: simpleStatement .
 
     $default  reduce using rule 32 (otherStatements)
 
 
-state 60
+state 61
 
    41 simpleStatement: assignmentStatement .
 
     $default  reduce using rule 41 (simpleStatement)
 
 
-state 61
+state 62
 
    42 simpleStatement: procedureStatement .
 
     $default  reduce using rule 42 (simpleStatement)
 
 
-state 62
+state 63
 
    44 assignmentStatement: variable . ASSIGNMENT expression
 
-    ASSIGNMENT  shift, and go to state 87
+    ASSIGNMENT  shift, and go to state 88
 
 
-state 63
+state 64
 
     1 program: PROGRAM ID EOL typeDefinitions variableDeclarations subprogramDeclarations compoundStatement STOP .
 
     $default  reduce using rule 1 (program)
 
 
-state 64
+state 65
 
    11 subprogramDeclarations: functionDeclaration EOL subprogramDeclarations .
 
     $default  reduce using rule 11 (subprogramDeclarations)
 
 
-state 65
+state 66
 
    13 functionDeclaration: func ID PAREN_L . formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
 
@@ -906,13 +919,13 @@ state 65
 
     $default  reduce using rule 25 (formalParameterList)
 
-    identifierList       go to state 41
-    paramDeclare         go to state 88
-    paramList            go to state 89
-    formalParameterList  go to state 90
+    identifierList       go to state 42
+    paramDeclare         go to state 89
+    paramList            go to state 90
+    formalParameterList  go to state 91
 
 
-state 66
+state 67
 
    17 procedureDeclaration: proc ID PAREN_L . formalParameterList PAREN_R EOL blockOrForward
 
@@ -920,27 +933,27 @@ state 66
 
     $default  reduce using rule 25 (formalParameterList)
 
-    identifierList       go to state 41
-    paramDeclare         go to state 88
-    paramList            go to state 89
-    formalParameterList  go to state 91
+    identifierList       go to state 42
+    paramDeclare         go to state 89
+    paramList            go to state 90
+    formalParameterList  go to state 92
 
 
-state 67
+state 68
 
    10 subprogramDeclarations: procedureDeclaration EOL subprogramDeclarations .
 
     $default  reduce using rule 10 (subprogramDeclarations)
 
 
-state 68
-
-   84 type: ARRAY ARRAY_L INT . RANGE INT ARRAY_R OF type
-
-    RANGE  shift, and go to state 92
-
-
 state 69
+
+   85 type: ARRAY ARRAY_L INT . RANGE INT ARRAY_R OF type
+
+    RANGE  shift, and go to state 93
+
+
+state 70
 
    21 paramDeclare: identifierList DECLARE . type
 
@@ -948,959 +961,961 @@ state 69
     RECORD  shift, and go to state 27
     ID      shift, and go to state 28
 
-    type  go to state 93
-
-
-state 70
-
-   87 fieldList: paramDeclare EOL . fieldList
-
-    ID  shift, and go to state 15
-
-    identifierList  go to state 41
-    paramDeclare    go to state 42
-    fieldList       go to state 94
+    rec   go to state 29
+    type  go to state 94
 
 
 state 71
 
-   89 endOfBlock: END .
+   88 fieldList: paramDeclare EOL . fieldList
 
-    $default  reduce using rule 89 (endOfBlock)
+    ID  shift, and go to state 15
+
+    identifierList  go to state 42
+    paramDeclare    go to state 43
+    fieldList       go to state 95
 
 
 state 72
 
-   85 type: RECORD fieldList endOfBlock .
+   90 endOfBlock: END .
 
-    $default  reduce using rule 85 (type)
+    $default  reduce using rule 90 (endOfBlock)
 
 
 state 73
 
-   33 loopHeader: FOR ID . ASSIGNMENT expression TO expression DO
+   86 type: rec fieldList endOfBlock .
 
-    ASSIGNMENT  shift, and go to state 95
+    $default  reduce using rule 86 (type)
 
 
 state 74
+
+   33 loopHeader: FOR ID . ASSIGNMENT expression TO expression DO
+
+    ASSIGNMENT  shift, and go to state 96
+
+
+state 75
 
    77 sign: ADDOP .
 
     $default  reduce using rule 77 (sign)
 
 
-state 75
+state 76
 
    35 open: IF expression . THEN statement
    36     | IF expression . THEN matched ELSE open
    38 matched: IF expression . THEN matched ELSE matched
 
-    THEN  shift, and go to state 96
-
-
-state 76
-
-   54 expression: simpleExpression . relationalOp simpleExpression
-   55           | simpleExpression .
-
-    RELATIONAL  shift, and go to state 97
-    EQUALS      shift, and go to state 98
-
-    $default  reduce using rule 55 (expression)
-
-    relationalOp  go to state 99
+    THEN  shift, and go to state 97
 
 
 state 77
 
-   56 simpleExpression: sign . term addOpTerm
+   54 expression: simpleExpression . relationalOp simpleExpression
+   55           | simpleExpression .
 
-    NOT             shift, and go to state 100
-    PAREN_L         shift, and go to state 101
-    INT             shift, and go to state 102
-    ID              shift, and go to state 103
-    STRING_LITERAL  shift, and go to state 104
+    RELATIONAL  shift, and go to state 98
+    EQUALS      shift, and go to state 99
 
-    variable           go to state 105
-    term               go to state 106
-    factorOptions      go to state 107
-    factor             go to state 108
-    functionReference  go to state 109
+    $default  reduce using rule 55 (expression)
+
+    relationalOp  go to state 100
 
 
 state 78
 
-   34 loopHeader: WHILE expression . DO
+   56 simpleExpression: sign . term addOpTerm
 
-    DO  shift, and go to state 110
+    NOT             shift, and go to state 101
+    PAREN_L         shift, and go to state 102
+    INT             shift, and go to state 103
+    ID              shift, and go to state 104
+    STRING_LITERAL  shift, and go to state 105
+
+    variable           go to state 106
+    term               go to state 107
+    factorOptions      go to state 108
+    factor             go to state 109
+    functionReference  go to state 110
 
 
 state 79
 
-   51 componentSelection: STOP . ID componentSelection
+   34 loopHeader: WHILE expression . DO
 
-    ID  shift, and go to state 111
+    DO  shift, and go to state 111
 
 
 state 80
 
-   45 procedureStatement: ID PAREN_L . actualParameterList PAREN_R
+   51 componentSelection: STOP . ID componentSelection
 
-    ADDOP  shift, and go to state 74
-
-    PAREN_R   reduce using rule 49 (actualParameterList)
-    $default  reduce using rule 78 (sign)
-
-    apList               go to state 112
-    actualParameterList  go to state 113
-    expression           go to state 114
-    simpleExpression     go to state 76
-    sign                 go to state 77
+    ID  shift, and go to state 112
 
 
 state 81
 
-   52 componentSelection: ARRAY_L . expression ARRAY_R componentSelection
+   45 procedureStatement: ID PAREN_L . actualParameterList PAREN_R
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
+    PAREN_R   reduce using rule 49 (actualParameterList)
     $default  reduce using rule 78 (sign)
 
-    expression        go to state 115
-    simpleExpression  go to state 76
-    sign              go to state 77
+    apList               go to state 113
+    actualParameterList  go to state 114
+    expression           go to state 115
+    simpleExpression     go to state 77
+    sign                 go to state 78
 
 
 state 82
+
+   52 componentSelection: ARRAY_L . expression ARRAY_R componentSelection
+
+    ADDOP  shift, and go to state 75
+
+    $default  reduce using rule 78 (sign)
+
+    expression        go to state 116
+    simpleExpression  go to state 77
+    sign              go to state 78
+
+
+state 83
 
    50 variable: ID componentSelection .
 
     $default  reduce using rule 50 (variable)
 
 
-state 83
+state 84
 
    26 compoundStatement: BGN statementSequence endOfBlock .
 
     $default  reduce using rule 26 (compoundStatement)
 
 
-state 84
+state 85
 
    27 statementSequence: statement EOL . statementSequence
 
-    BGN    shift, and go to state 34
-    FOR    shift, and go to state 48
-    IF     shift, and go to state 49
-    WHILE  shift, and go to state 50
-    ID     shift, and go to state 51
+    BGN    shift, and go to state 35
+    FOR    shift, and go to state 49
+    IF     shift, and go to state 50
+    WHILE  shift, and go to state 51
+    ID     shift, and go to state 52
 
     $default  reduce using rule 43 (simpleStatement)
 
-    compoundStatement    go to state 52
-    statementSequence    go to state 116
-    statement            go to state 54
-    otherStatements      go to state 55
-    loopHeader           go to state 56
-    open                 go to state 57
-    matched              go to state 58
-    simpleStatement      go to state 59
-    assignmentStatement  go to state 60
-    procedureStatement   go to state 61
-    variable             go to state 62
+    compoundStatement    go to state 53
+    statementSequence    go to state 117
+    statement            go to state 55
+    otherStatements      go to state 56
+    loopHeader           go to state 57
+    open                 go to state 58
+    matched              go to state 59
+    simpleStatement      go to state 60
+    assignmentStatement  go to state 61
+    procedureStatement   go to state 62
+    variable             go to state 63
 
 
-state 85
+state 86
 
    37 open: loopHeader open .
 
     $default  reduce using rule 37 (open)
 
 
-state 86
+state 87
 
    40 matched: loopHeader matched .
 
     $default  reduce using rule 40 (matched)
 
 
-state 87
+state 88
 
    44 assignmentStatement: variable ASSIGNMENT . expression
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
     $default  reduce using rule 78 (sign)
 
-    expression        go to state 117
-    simpleExpression  go to state 76
-    sign              go to state 77
+    expression        go to state 118
+    simpleExpression  go to state 77
+    sign              go to state 78
 
 
-state 88
+state 89
 
    23 paramList: paramDeclare .
 
     $default  reduce using rule 23 (paramList)
 
 
-state 89
+state 90
 
    22 paramList: paramList . EOL paramDeclare
    24 formalParameterList: paramList .
 
-    EOL  shift, and go to state 118
+    EOL  shift, and go to state 119
 
     $default  reduce using rule 24 (formalParameterList)
 
 
-state 90
-
-   13 functionDeclaration: func ID PAREN_L formalParameterList . PAREN_R DECLARE resultType EOL blockOrForward
-
-    PAREN_R  shift, and go to state 119
-
-
 state 91
 
-   17 procedureDeclaration: proc ID PAREN_L formalParameterList . PAREN_R EOL blockOrForward
+   13 functionDeclaration: func ID PAREN_L formalParameterList . PAREN_R DECLARE resultType EOL blockOrForward
 
     PAREN_R  shift, and go to state 120
 
 
 state 92
 
-   84 type: ARRAY ARRAY_L INT RANGE . INT ARRAY_R OF type
+   17 procedureDeclaration: proc ID PAREN_L formalParameterList . PAREN_R EOL blockOrForward
 
-    INT  shift, and go to state 121
+    PAREN_R  shift, and go to state 121
 
 
 state 93
+
+   85 type: ARRAY ARRAY_L INT RANGE . INT ARRAY_R OF type
+
+    INT  shift, and go to state 122
+
+
+state 94
 
    21 paramDeclare: identifierList DECLARE type .
 
     $default  reduce using rule 21 (paramDeclare)
 
 
-state 94
-
-   87 fieldList: paramDeclare EOL fieldList .
-
-    $default  reduce using rule 87 (fieldList)
-
-
 state 95
 
-   33 loopHeader: FOR ID ASSIGNMENT . expression TO expression DO
+   88 fieldList: paramDeclare EOL fieldList .
 
-    ADDOP  shift, and go to state 74
-
-    $default  reduce using rule 78 (sign)
-
-    expression        go to state 122
-    simpleExpression  go to state 76
-    sign              go to state 77
+    $default  reduce using rule 88 (fieldList)
 
 
 state 96
+
+   33 loopHeader: FOR ID ASSIGNMENT . expression TO expression DO
+
+    ADDOP  shift, and go to state 75
+
+    $default  reduce using rule 78 (sign)
+
+    expression        go to state 123
+    simpleExpression  go to state 77
+    sign              go to state 78
+
+
+state 97
 
    35 open: IF expression THEN . statement
    36     | IF expression THEN . matched ELSE open
    38 matched: IF expression THEN . matched ELSE matched
 
-    BGN    shift, and go to state 34
-    FOR    shift, and go to state 48
-    IF     shift, and go to state 49
-    WHILE  shift, and go to state 50
-    ID     shift, and go to state 51
+    BGN    shift, and go to state 35
+    FOR    shift, and go to state 49
+    IF     shift, and go to state 50
+    WHILE  shift, and go to state 51
+    ID     shift, and go to state 52
 
     $default  reduce using rule 43 (simpleStatement)
 
-    compoundStatement    go to state 52
-    statement            go to state 123
-    otherStatements      go to state 55
-    loopHeader           go to state 56
-    open                 go to state 57
-    matched              go to state 124
-    simpleStatement      go to state 59
-    assignmentStatement  go to state 60
-    procedureStatement   go to state 61
-    variable             go to state 62
+    compoundStatement    go to state 53
+    statement            go to state 124
+    otherStatements      go to state 56
+    loopHeader           go to state 57
+    open                 go to state 58
+    matched              go to state 125
+    simpleStatement      go to state 60
+    assignmentStatement  go to state 61
+    procedureStatement   go to state 62
+    variable             go to state 63
 
 
-state 97
+state 98
 
    59 relationalOp: RELATIONAL .
 
     $default  reduce using rule 59 (relationalOp)
 
 
-state 98
+state 99
 
    60 relationalOp: EQUALS .
 
     $default  reduce using rule 60 (relationalOp)
 
 
-state 99
+state 100
 
    54 expression: simpleExpression relationalOp . simpleExpression
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
     $default  reduce using rule 78 (sign)
 
-    simpleExpression  go to state 125
-    sign              go to state 77
-
-
-state 100
-
-   68 factorOptions: NOT . factor
-
-    NOT             shift, and go to state 100
-    PAREN_L         shift, and go to state 101
-    INT             shift, and go to state 102
-    ID              shift, and go to state 103
-    STRING_LITERAL  shift, and go to state 104
-
-    variable           go to state 105
-    factorOptions      go to state 107
-    factor             go to state 126
-    functionReference  go to state 109
+    simpleExpression  go to state 126
+    sign              go to state 78
 
 
 state 101
 
-   69 factorOptions: PAREN_L . expression PAREN_R
+   68 factorOptions: NOT . factor
 
-    ADDOP  shift, and go to state 74
+    NOT             shift, and go to state 101
+    PAREN_L         shift, and go to state 102
+    INT             shift, and go to state 103
+    ID              shift, and go to state 104
+    STRING_LITERAL  shift, and go to state 105
 
-    $default  reduce using rule 78 (sign)
-
-    expression        go to state 127
-    simpleExpression  go to state 76
-    sign              go to state 77
+    variable           go to state 106
+    factorOptions      go to state 108
+    factor             go to state 127
+    functionReference  go to state 110
 
 
 state 102
+
+   69 factorOptions: PAREN_L . expression PAREN_R
+
+    ADDOP  shift, and go to state 75
+
+    $default  reduce using rule 78 (sign)
+
+    expression        go to state 128
+    simpleExpression  go to state 77
+    sign              go to state 78
+
+
+state 103
 
    64 factorOptions: INT .
 
     $default  reduce using rule 64 (factorOptions)
 
 
-state 103
+state 104
 
    50 variable: ID . componentSelection
    71 functionReference: ID . PAREN_L actualParameterList PAREN_R
 
-    STOP     shift, and go to state 79
-    PAREN_L  shift, and go to state 128
-    ARRAY_L  shift, and go to state 81
+    STOP     shift, and go to state 80
+    PAREN_L  shift, and go to state 129
+    ARRAY_L  shift, and go to state 82
 
     $default  reduce using rule 53 (componentSelection)
 
-    componentSelection  go to state 82
+    componentSelection  go to state 83
 
 
-state 104
+state 105
 
    65 factorOptions: STRING_LITERAL .
 
     $default  reduce using rule 65 (factorOptions)
 
 
-state 105
+state 106
 
    66 factorOptions: variable .
 
     $default  reduce using rule 66 (factorOptions)
 
 
-state 106
+state 107
 
    56 simpleExpression: sign term . addOpTerm
 
-    OR     shift, and go to state 129
-    ADDOP  shift, and go to state 130
+    OR     shift, and go to state 130
+    ADDOP  shift, and go to state 131
 
     $default  reduce using rule 58 (addOpTerm)
 
-    addOpTerm  go to state 131
-    addOp      go to state 132
+    addOpTerm  go to state 132
+    addOp      go to state 133
 
 
-state 107
+state 108
 
    70 factor: factorOptions .
 
     $default  reduce using rule 70 (factor)
 
 
-state 108
+state 109
 
    63 term: factor . mulOpFactor
 
-    AND      shift, and go to state 133
-    MOD      shift, and go to state 134
-    MULTIOP  shift, and go to state 135
+    AND      shift, and go to state 134
+    MOD      shift, and go to state 135
+    MULTIOP  shift, and go to state 136
 
     $default  reduce using rule 62 (mulOpFactor)
 
-    mulOpFactor  go to state 136
-    mulOp        go to state 137
+    mulOpFactor  go to state 137
+    mulOp        go to state 138
 
 
-state 109
+state 110
 
    67 factorOptions: functionReference .
 
     $default  reduce using rule 67 (factorOptions)
 
 
-state 110
+state 111
 
    34 loopHeader: WHILE expression DO .
 
     $default  reduce using rule 34 (loopHeader)
 
 
-state 111
+state 112
 
    51 componentSelection: STOP ID . componentSelection
 
-    STOP     shift, and go to state 79
-    ARRAY_L  shift, and go to state 81
+    STOP     shift, and go to state 80
+    ARRAY_L  shift, and go to state 82
 
     $default  reduce using rule 53 (componentSelection)
 
-    componentSelection  go to state 138
+    componentSelection  go to state 139
 
 
-state 112
+state 113
 
    48 actualParameterList: apList .
 
     $default  reduce using rule 48 (actualParameterList)
 
 
-state 113
+state 114
 
    45 procedureStatement: ID PAREN_L actualParameterList . PAREN_R
 
-    PAREN_R  shift, and go to state 139
-
-
-state 114
-
-   46 apList: expression . SEPARATOR apList
-   47       | expression .
-
-    SEPARATOR  shift, and go to state 140
-
-    $default  reduce using rule 47 (apList)
+    PAREN_R  shift, and go to state 140
 
 
 state 115
 
-   52 componentSelection: ARRAY_L expression . ARRAY_R componentSelection
+   46 apList: expression . SEPARATOR apList
+   47       | expression .
 
-    ARRAY_R  shift, and go to state 141
+    SEPARATOR  shift, and go to state 141
+
+    $default  reduce using rule 47 (apList)
 
 
 state 116
+
+   52 componentSelection: ARRAY_L expression . ARRAY_R componentSelection
+
+    ARRAY_R  shift, and go to state 142
+
+
+state 117
 
    27 statementSequence: statement EOL statementSequence .
 
     $default  reduce using rule 27 (statementSequence)
 
 
-state 117
+state 118
 
    44 assignmentStatement: variable ASSIGNMENT expression .
 
     $default  reduce using rule 44 (assignmentStatement)
 
 
-state 118
+state 119
 
    22 paramList: paramList EOL . paramDeclare
 
     ID  shift, and go to state 15
 
-    identifierList  go to state 41
-    paramDeclare    go to state 142
-
-
-state 119
-
-   13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R . DECLARE resultType EOL blockOrForward
-
-    DECLARE  shift, and go to state 143
+    identifierList  go to state 42
+    paramDeclare    go to state 143
 
 
 state 120
 
-   17 procedureDeclaration: proc ID PAREN_L formalParameterList PAREN_R . EOL blockOrForward
+   13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R . DECLARE resultType EOL blockOrForward
 
-    EOL  shift, and go to state 144
+    DECLARE  shift, and go to state 144
 
 
 state 121
 
-   84 type: ARRAY ARRAY_L INT RANGE INT . ARRAY_R OF type
+   17 procedureDeclaration: proc ID PAREN_L formalParameterList PAREN_R . EOL blockOrForward
 
-    ARRAY_R  shift, and go to state 145
+    EOL  shift, and go to state 145
 
 
 state 122
 
-   33 loopHeader: FOR ID ASSIGNMENT expression . TO expression DO
+   85 type: ARRAY ARRAY_L INT RANGE INT . ARRAY_R OF type
 
-    TO  shift, and go to state 146
+    ARRAY_R  shift, and go to state 146
 
 
 state 123
+
+   33 loopHeader: FOR ID ASSIGNMENT expression . TO expression DO
+
+    TO  shift, and go to state 147
+
+
+state 124
 
    35 open: IF expression THEN statement .
 
     $default  reduce using rule 35 (open)
 
 
-state 124
+state 125
 
    30 statement: matched .
    36 open: IF expression THEN matched . ELSE open
    38 matched: IF expression THEN matched . ELSE matched
 
-    ELSE  shift, and go to state 147
+    ELSE  shift, and go to state 148
 
     $default  reduce using rule 30 (statement)
 
 
-state 125
+state 126
 
    54 expression: simpleExpression relationalOp simpleExpression .
 
     $default  reduce using rule 54 (expression)
 
 
-state 126
+state 127
 
    68 factorOptions: NOT factor .
 
     $default  reduce using rule 68 (factorOptions)
 
 
-state 127
+state 128
 
    69 factorOptions: PAREN_L expression . PAREN_R
 
-    PAREN_R  shift, and go to state 148
+    PAREN_R  shift, and go to state 149
 
 
-state 128
+state 129
 
    71 functionReference: ID PAREN_L . actualParameterList PAREN_R
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
     PAREN_R   reduce using rule 49 (actualParameterList)
     $default  reduce using rule 78 (sign)
 
-    apList               go to state 112
-    actualParameterList  go to state 149
-    expression           go to state 114
-    simpleExpression     go to state 76
-    sign                 go to state 77
+    apList               go to state 113
+    actualParameterList  go to state 150
+    expression           go to state 115
+    simpleExpression     go to state 77
+    sign                 go to state 78
 
 
-state 129
+state 130
 
    73 addOp: OR .
 
     $default  reduce using rule 73 (addOp)
 
 
-state 130
+state 131
 
    72 addOp: ADDOP .
 
     $default  reduce using rule 72 (addOp)
 
 
-state 131
+state 132
 
    56 simpleExpression: sign term addOpTerm .
 
     $default  reduce using rule 56 (simpleExpression)
 
 
-state 132
+state 133
 
    57 addOpTerm: addOp . term addOpTerm
 
-    NOT             shift, and go to state 100
-    PAREN_L         shift, and go to state 101
-    INT             shift, and go to state 102
-    ID              shift, and go to state 103
-    STRING_LITERAL  shift, and go to state 104
+    NOT             shift, and go to state 101
+    PAREN_L         shift, and go to state 102
+    INT             shift, and go to state 103
+    ID              shift, and go to state 104
+    STRING_LITERAL  shift, and go to state 105
 
-    variable           go to state 105
-    term               go to state 150
-    factorOptions      go to state 107
-    factor             go to state 108
-    functionReference  go to state 109
+    variable           go to state 106
+    term               go to state 151
+    factorOptions      go to state 108
+    factor             go to state 109
+    functionReference  go to state 110
 
 
-state 133
+state 134
 
    76 mulOp: AND .
 
     $default  reduce using rule 76 (mulOp)
 
 
-state 134
+state 135
 
    75 mulOp: MOD .
 
     $default  reduce using rule 75 (mulOp)
 
 
-state 135
+state 136
 
    74 mulOp: MULTIOP .
 
     $default  reduce using rule 74 (mulOp)
 
 
-state 136
+state 137
 
    63 term: factor mulOpFactor .
 
     $default  reduce using rule 63 (term)
 
 
-state 137
+state 138
 
    61 mulOpFactor: mulOp . factor mulOpFactor
 
-    NOT             shift, and go to state 100
-    PAREN_L         shift, and go to state 101
-    INT             shift, and go to state 102
-    ID              shift, and go to state 103
-    STRING_LITERAL  shift, and go to state 104
+    NOT             shift, and go to state 101
+    PAREN_L         shift, and go to state 102
+    INT             shift, and go to state 103
+    ID              shift, and go to state 104
+    STRING_LITERAL  shift, and go to state 105
 
-    variable           go to state 105
-    factorOptions      go to state 107
-    factor             go to state 151
-    functionReference  go to state 109
+    variable           go to state 106
+    factorOptions      go to state 108
+    factor             go to state 152
+    functionReference  go to state 110
 
 
-state 138
+state 139
 
    51 componentSelection: STOP ID componentSelection .
 
     $default  reduce using rule 51 (componentSelection)
 
 
-state 139
+state 140
 
    45 procedureStatement: ID PAREN_L actualParameterList PAREN_R .
 
     $default  reduce using rule 45 (procedureStatement)
 
 
-state 140
+state 141
 
    46 apList: expression SEPARATOR . apList
 
-    ADDOP  shift, and go to state 74
+    ADDOP  shift, and go to state 75
 
     $default  reduce using rule 78 (sign)
 
-    apList            go to state 152
-    expression        go to state 114
-    simpleExpression  go to state 76
-    sign              go to state 77
-
-
-state 141
-
-   52 componentSelection: ARRAY_L expression ARRAY_R . componentSelection
-
-    STOP     shift, and go to state 79
-    ARRAY_L  shift, and go to state 81
-
-    $default  reduce using rule 53 (componentSelection)
-
-    componentSelection  go to state 153
+    apList            go to state 153
+    expression        go to state 115
+    simpleExpression  go to state 77
+    sign              go to state 78
 
 
 state 142
+
+   52 componentSelection: ARRAY_L expression ARRAY_R . componentSelection
+
+    STOP     shift, and go to state 80
+    ARRAY_L  shift, and go to state 82
+
+    $default  reduce using rule 53 (componentSelection)
+
+    componentSelection  go to state 154
+
+
+state 143
 
    22 paramList: paramList EOL paramDeclare .
 
     $default  reduce using rule 22 (paramList)
 
 
-state 143
+state 144
 
    13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R DECLARE . resultType EOL blockOrForward
 
-    ID  shift, and go to state 154
+    ID  shift, and go to state 155
 
-    resultType  go to state 155
-
-
-state 144
-
-   17 procedureDeclaration: proc ID PAREN_L formalParameterList PAREN_R EOL . blockOrForward
-
-    FORWARD  shift, and go to state 156
-    VAR      shift, and go to state 11
-
-    $default  reduce using rule 3 (variableDeclarations)
-
-    variableDeclarations  go to state 157
-    blockOrForward        go to state 158
-    block                 go to state 159
+    resultType  go to state 156
 
 
 state 145
 
-   84 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R . OF type
+   17 procedureDeclaration: proc ID PAREN_L formalParameterList PAREN_R EOL . blockOrForward
 
-    OF  shift, and go to state 160
+    FORWARD  shift, and go to state 157
+    VAR      shift, and go to state 11
+
+    $default  reduce using rule 3 (variableDeclarations)
+
+    variableDeclarations  go to state 158
+    blockOrForward        go to state 159
+    block                 go to state 160
 
 
 state 146
 
-   33 loopHeader: FOR ID ASSIGNMENT expression TO . expression DO
+   85 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R . OF type
 
-    ADDOP  shift, and go to state 74
-
-    $default  reduce using rule 78 (sign)
-
-    expression        go to state 161
-    simpleExpression  go to state 76
-    sign              go to state 77
+    OF  shift, and go to state 161
 
 
 state 147
 
-   36 open: IF expression THEN matched ELSE . open
-   38 matched: IF expression THEN matched ELSE . matched
+   33 loopHeader: FOR ID ASSIGNMENT expression TO . expression DO
 
-    BGN    shift, and go to state 34
-    FOR    shift, and go to state 48
-    IF     shift, and go to state 49
-    WHILE  shift, and go to state 50
-    ID     shift, and go to state 51
+    ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 43 (simpleStatement)
+    $default  reduce using rule 78 (sign)
 
-    compoundStatement    go to state 52
-    otherStatements      go to state 55
-    loopHeader           go to state 56
-    open                 go to state 162
-    matched              go to state 163
-    simpleStatement      go to state 59
-    assignmentStatement  go to state 60
-    procedureStatement   go to state 61
-    variable             go to state 62
+    expression        go to state 162
+    simpleExpression  go to state 77
+    sign              go to state 78
 
 
 state 148
+
+   36 open: IF expression THEN matched ELSE . open
+   38 matched: IF expression THEN matched ELSE . matched
+
+    BGN    shift, and go to state 35
+    FOR    shift, and go to state 49
+    IF     shift, and go to state 50
+    WHILE  shift, and go to state 51
+    ID     shift, and go to state 52
+
+    $default  reduce using rule 43 (simpleStatement)
+
+    compoundStatement    go to state 53
+    otherStatements      go to state 56
+    loopHeader           go to state 57
+    open                 go to state 163
+    matched              go to state 164
+    simpleStatement      go to state 60
+    assignmentStatement  go to state 61
+    procedureStatement   go to state 62
+    variable             go to state 63
+
+
+state 149
 
    69 factorOptions: PAREN_L expression PAREN_R .
 
     $default  reduce using rule 69 (factorOptions)
 
 
-state 149
+state 150
 
    71 functionReference: ID PAREN_L actualParameterList . PAREN_R
 
-    PAREN_R  shift, and go to state 164
-
-
-state 150
-
-   57 addOpTerm: addOp term . addOpTerm
-
-    OR     shift, and go to state 129
-    ADDOP  shift, and go to state 130
-
-    $default  reduce using rule 58 (addOpTerm)
-
-    addOpTerm  go to state 165
-    addOp      go to state 132
+    PAREN_R  shift, and go to state 165
 
 
 state 151
 
-   61 mulOpFactor: mulOp factor . mulOpFactor
+   57 addOpTerm: addOp term . addOpTerm
 
-    AND      shift, and go to state 133
-    MOD      shift, and go to state 134
-    MULTIOP  shift, and go to state 135
+    OR     shift, and go to state 130
+    ADDOP  shift, and go to state 131
 
-    $default  reduce using rule 62 (mulOpFactor)
+    $default  reduce using rule 58 (addOpTerm)
 
-    mulOpFactor  go to state 166
-    mulOp        go to state 137
+    addOpTerm  go to state 166
+    addOp      go to state 133
 
 
 state 152
+
+   61 mulOpFactor: mulOp factor . mulOpFactor
+
+    AND      shift, and go to state 134
+    MOD      shift, and go to state 135
+    MULTIOP  shift, and go to state 136
+
+    $default  reduce using rule 62 (mulOpFactor)
+
+    mulOpFactor  go to state 167
+    mulOp        go to state 138
+
+
+state 153
 
    46 apList: expression SEPARATOR apList .
 
     $default  reduce using rule 46 (apList)
 
 
-state 153
+state 154
 
    52 componentSelection: ARRAY_L expression ARRAY_R componentSelection .
 
     $default  reduce using rule 52 (componentSelection)
 
 
-state 154
+state 155
 
    14 resultType: ID .
 
     $default  reduce using rule 14 (resultType)
 
 
-state 155
+state 156
 
    13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R DECLARE resultType . EOL blockOrForward
 
-    EOL  shift, and go to state 167
+    EOL  shift, and go to state 168
 
 
-state 156
+state 157
 
    19 blockOrForward: FORWARD .
 
     $default  reduce using rule 19 (blockOrForward)
 
 
-state 157
+state 158
 
    20 block: variableDeclarations . compoundStatement
 
-    BGN  shift, and go to state 34
+    BGN  shift, and go to state 35
 
-    compoundStatement  go to state 168
+    compoundStatement  go to state 169
 
 
-state 158
+state 159
 
    17 procedureDeclaration: proc ID PAREN_L formalParameterList PAREN_R EOL blockOrForward .
 
     $default  reduce using rule 17 (procedureDeclaration)
 
 
-state 159
+state 160
 
    18 blockOrForward: block .
 
     $default  reduce using rule 18 (blockOrForward)
 
 
-state 160
+state 161
 
-   84 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF . type
+   85 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF . type
 
     ARRAY   shift, and go to state 26
     RECORD  shift, and go to state 27
     ID      shift, and go to state 28
 
-    type  go to state 169
-
-
-state 161
-
-   33 loopHeader: FOR ID ASSIGNMENT expression TO expression . DO
-
-    DO  shift, and go to state 170
+    rec   go to state 29
+    type  go to state 170
 
 
 state 162
+
+   33 loopHeader: FOR ID ASSIGNMENT expression TO expression . DO
+
+    DO  shift, and go to state 171
+
+
+state 163
 
    36 open: IF expression THEN matched ELSE open .
 
     $default  reduce using rule 36 (open)
 
 
-state 163
+state 164
 
    38 matched: IF expression THEN matched ELSE matched .
 
     $default  reduce using rule 38 (matched)
 
 
-state 164
+state 165
 
    71 functionReference: ID PAREN_L actualParameterList PAREN_R .
 
     $default  reduce using rule 71 (functionReference)
 
 
-state 165
+state 166
 
    57 addOpTerm: addOp term addOpTerm .
 
     $default  reduce using rule 57 (addOpTerm)
 
 
-state 166
+state 167
 
    61 mulOpFactor: mulOp factor mulOpFactor .
 
     $default  reduce using rule 61 (mulOpFactor)
 
 
-state 167
+state 168
 
    13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL . blockOrForward
 
-    FORWARD  shift, and go to state 156
+    FORWARD  shift, and go to state 157
     VAR      shift, and go to state 11
 
     $default  reduce using rule 3 (variableDeclarations)
 
-    variableDeclarations  go to state 157
-    blockOrForward        go to state 171
-    block                 go to state 159
+    variableDeclarations  go to state 158
+    blockOrForward        go to state 172
+    block                 go to state 160
 
 
-state 168
+state 169
 
    20 block: variableDeclarations compoundStatement .
 
     $default  reduce using rule 20 (block)
 
 
-state 169
-
-   84 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type .
-
-    $default  reduce using rule 84 (type)
-
-
 state 170
+
+   85 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type .
+
+    $default  reduce using rule 85 (type)
+
+
+state 171
 
    33 loopHeader: FOR ID ASSIGNMENT expression TO expression DO .
 
     $default  reduce using rule 33 (loopHeader)
 
 
-state 171
+state 172
 
    13 functionDeclaration: func ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward .
 

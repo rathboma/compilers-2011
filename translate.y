@@ -221,7 +221,7 @@ paramDeclare:
         }
 
         $<chain>$ = $<chain>1;
-        printTokenChain($<chain>$);
+        //printTokenChain($<chain>$);
     }
     ;
 
