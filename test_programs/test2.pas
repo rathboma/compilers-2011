@@ -4,20 +4,24 @@
 
 program errorfree;
 type
-{	r = record
+    kid = record
+        name : string
+    end;
+	r = record
 		a,b : integer;
-		c   : string
-	end;}
+		c   : string;
+		son : kid
+	end;	
 	y = array[1..10] of integer;
 	s = string;
 var
 	z : s;
-    r : s;
+	rec : r;
 function foo1(a : integer) : r; 
 begin
-   a := 0
+   z := "hello kitty"
 end;
-
+function bar() : string; forward;
 function foo2(a : integer; c : string) : y; 
 begin
    while a do
@@ -25,7 +29,6 @@ begin
 end;
 
 function foo3(a, b : integer) : s; forward;
-
 begin
-	z := foo3(3)
+    rec.son.name := "hello"
 end.

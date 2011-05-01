@@ -127,7 +127,7 @@ type_entry resolveStructuredType(table t, char * name, token nesting){
     if(!parent){
         printf("%s not declared!\n", name);
         yyerror("variable not declared before use");
-
+        
     }
     token tok = nesting;
     int depth = 0;
