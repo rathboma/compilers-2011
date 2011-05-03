@@ -12,20 +12,8 @@ type
 	s = string;
 var
 	z : s;
-
-function foo1(a : integer) : r; 
+	result : s;
 begin
-   a := 10
-end;
-
-function foo2(a : integer; c : string) : y; 
-begin
-   while a do
-       a := a - 1
-end;
-
-function foo3(a, b : integer) : s; forward;
-
-begin
-	z := foo3(3, 4)
+	z := "hello";
+	result := z + " world";
 end.

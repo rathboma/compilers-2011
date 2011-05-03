@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 void yyerror(char* message){
     printf("PARSER ERROR: %s\n", message);
     exit(1);
@@ -59,6 +58,7 @@ struct s_entry{
     symbol_entry parameters[100];
     table innerScope;
     int symbolType;
+    char * addr;
     };
 
 
@@ -89,9 +89,21 @@ type_entry installType(char* name){
     return(newt);
 }
 
+type_entry findBaseType(char* name){
+    printf("looking for %s in base types\n", name);
+    type_entry t = (&type_table)->next;
+    while(t){
+        printf("checking %s\n", t->name);
+        if(strcmp(name, t->name) == 0) return t;
+        t = t->next;
+    }
+    yyerror("could not resolve base type");
+    return NULL;
+}
+
 
 type_entry resolveSymbolType(table t, char* name, int checkParent){
-    printf("trying to resolve Type %s\n", name);
+    //printf("trying to resolve Type %s\n", name);
     symbol_entry s = t->head;
     while(s){
         if(strcmp(s->symbol, name) == 0) return(s->type_pointer);
@@ -106,7 +118,7 @@ type_entry resolveSymbolType(table t, char* name, int checkParent){
 type_entry resolveType(table t, char* name){
     type_entry s = &type_table;
     while(s = s->next){
-        // printf("comparing: %s, %s\n", name, s->name);
+        // //printf("comparing: %s, %s\n", name, s->name);
         if(strcmp(s->name, name) == 0) return(s);
     }
     return(resolveSymbolType(t, name, 1));
@@ -115,13 +127,13 @@ type_entry resolveType(table t, char* name){
 printTokenChain(token t){
     token t2 = t;
     while(t2){
-        printf("token: %s, ", t2->value);
+        //printf("token: %s, ", t2->value);
         t2 = t2->next;
     }
 }
 
 type_entry resolveStructuredType(table t, char * name, token nesting){
-    printf("structured type looking for %s \n", name);
+    //printf("structured type looking for %s \n", name);
     
     symbol_entry parent = findSymbol(t, name, 1, BASICSYM);
     if(!parent){
@@ -138,8 +150,7 @@ type_entry resolveStructuredType(table t, char * name, token nesting){
         else{
             target = resolveSymbolType(target->scopedFields, tok->value, 0);
         }
-        tok = tok->next;
-        
+        tok = tok->next;        
     }
     return(target);
 }
@@ -160,6 +171,10 @@ symbol_entry findSymbol(table t, char* value, int searchParents, int symbolType)
     return findSymbol(t->parent, value, searchParents, symbolType);
     }
     return(NULL);
+}
+
+symbol_entry find(char* value, int symbolType){
+    return findSymbol(currentSymbolTable, value, 1, symbolType);
 }
 
 symbol_entry installNumber(int value){
@@ -185,11 +200,11 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     // 5. if not, search table and parents to resolve type
     // 6. if type resolved, add, otherwise, error
     
-    printf("installing symbol '%s'\n", value);
+    //printf("installing symbol '%s'\n", value);
     //first see if the symbol already exists
     symbol_entry existing = findSymbol(t, value, 0, symbolType);
     if(existing) {
-        printf("problem when installing symbol %s\n", value);
+        //printf("problem when installing symbol %s\n", value);
         yyerror("symbol is already defined!");
         return(NULL);
     } //or throw an error somehow
@@ -199,6 +214,7 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     
     //create the new entry
     symbol_entry newEntry = (symbol_entry) malloc(sizeof(struct s_entry));
+    newEntry->addr = 0;
     newEntry->symbol = calloc(strlen(value), sizeof(char));
     strcpy(newEntry->symbol, value);
     newEntry->type_pointer = new_type;
@@ -219,16 +235,19 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
 
 void advance(){
     table newt = malloc(sizeof(struct tbl_struct));
-    printf("advancing\n");
+    //printf("advancing\n");
     newt->parent = currentSymbolTable;
     currentSymbolTable = newt;
 }
 
 void retreat(){
-    printf("retreating\n");
+    //printf("retreating\n");
     if(currentSymbolTable->parent) {currentSymbolTable = currentSymbolTable->parent;}
-    else{printf("WARNING: retreat called, but already at the top of the symbol table tree\n");}
+    else{
+        //printf("WARNING: retreat called, but already at the top of the symbol table tree\n");
+        }
 }
+
 
 // types table
 // methods:  resolveType(char* val) => returns type_entry / NULL

@@ -95,39 +95,39 @@ Grammar
    54 expression: simpleExpression relationalOp simpleExpression
    55           | simpleExpression
 
-   56 simpleExpression: sign term addOpTerm
+   56 sign: ADDOP
+   57     | /* empty */
 
-   57 addOpTerm: addOp term addOpTerm
-   58          | /* empty */
+   58 simpleExpression: sign term addOpTerm
 
-   59 relationalOp: RELATIONAL
-   60             | EQUALS
+   59 addOpTerm: addOp term addOpTerm
+   60          | /* empty */
 
-   61 mulOpFactor: mulOp factor mulOpFactor
-   62            | /* empty */
+   61 relationalOp: RELATIONAL
+   62             | EQUALS
 
-   63 term: factor mulOpFactor
+   63 mulOpFactor: mulOp factor mulOpFactor
+   64            | /* empty */
 
-   64 factorOptions: INT
-   65              | STRING_LITERAL
-   66              | variable
-   67              | functionReference
-   68              | NOT factor
-   69              | PAREN_L expression PAREN_R
+   65 term: factor mulOpFactor
 
-   70 factor: factorOptions
+   66 factor: factorOptions
 
-   71 functionReference: ID PAREN_L actualParameterList PAREN_R
+   67 factorOptions: INT
+   68              | STRING_LITERAL
+   69              | variable
+   70              | functionReference
+   71              | NOT factor
+   72              | PAREN_L expression PAREN_R
 
-   72 addOp: ADDOP
-   73      | OR
+   73 functionReference: ID PAREN_L actualParameterList PAREN_R
 
-   74 mulOp: MULTIOP
-   75      | MOD
-   76      | AND
+   74 addOp: ADDOP
+   75      | OR
 
-   77 sign: ADDOP
-   78     | /* empty */
+   76 mulOp: MULTIOP
+   77      | MOD
+   78      | AND
 
    79 typeDefinitions: TYPE multipleTypeDefs
    80                | /* empty */
@@ -153,7 +153,7 @@ Terminals, with rules where they appear
 
 $end (0) 0
 error (256)
-AND (258) 76
+AND (258) 78
 BGN (259) 26
 FORWARD (260) 19
 DIV (261)
@@ -164,10 +164,10 @@ FOR (265) 33
 FUNC (266) 15
 IF (267) 35 36 38
 ARRAY (268) 85
-MOD (269) 75
-NOT (270) 68
+MOD (269) 77
+NOT (270) 71
 OF (271) 85
-OR (272) 73
+OR (272) 75
 PROCEDURE (273) 16
 PROGRAM (274) 1
 RECORD (275) 84
@@ -176,24 +176,24 @@ TO (277) 33
 TYPE (278) 79
 VAR (279) 2
 WHILE (280) 34
-ADDOP (281) 72 77
-MULTIOP (282) 74
-RELATIONAL (283) 59
-EQUALS (284) 60 83
+ADDOP (281) 56 74
+MULTIOP (282) 76
+RELATIONAL (283) 61
+EQUALS (284) 62 83
 STOP (285) 1 51
 SEPARATOR (286) 8 46
 DECLARE (287) 6 13 21
 EOL (288) 1 4 5 10 11 13 17 22 27 83 88
 ASSIGNMENT (289) 33 44
 RANGE (290) 85
-PAREN_L (291) 13 17 45 69 71
-PAREN_R (292) 13 17 45 69 71
+PAREN_L (291) 13 17 45 72 73
+PAREN_R (292) 13 17 45 72 73
 ARRAY_L (293) 52 85
 ARRAY_R (294) 52 85
 FLOAT (295)
-INT (296) 64 85
-ID (297) 1 7 13 14 17 33 45 50 51 71 83 87
-STRING_LITERAL (298) 65
+INT (296) 67 85
+ID (297) 1 7 13 14 17 33 45 50 51 73 83 87
+STRING_LITERAL (298) 68
 
 
 Nonterminals, with rules where they appear
@@ -257,35 +257,35 @@ procedureStatement (71)
 apList (72)
     on left: 46 47, on right: 46 48
 actualParameterList (73)
-    on left: 48 49, on right: 45 71
+    on left: 48 49, on right: 45 73
 variable (74)
-    on left: 50, on right: 44 66
+    on left: 50, on right: 44 69
 componentSelection (75)
     on left: 51 52 53, on right: 50 51 52
 expression (76)
-    on left: 54 55, on right: 33 34 35 36 38 44 46 47 52 69
-simpleExpression (77)
-    on left: 56, on right: 54 55
-addOpTerm (78)
-    on left: 57 58, on right: 56 57
-relationalOp (79)
-    on left: 59 60, on right: 54
-mulOpFactor (80)
-    on left: 61 62, on right: 61 63
-term (81)
-    on left: 63, on right: 56 57
-factorOptions (82)
-    on left: 64 65 66 67 68 69, on right: 70
+    on left: 54 55, on right: 33 34 35 36 38 44 46 47 52 72
+sign (77)
+    on left: 56 57, on right: 58
+simpleExpression (78)
+    on left: 58, on right: 54 55
+addOpTerm (79)
+    on left: 59 60, on right: 58 59
+relationalOp (80)
+    on left: 61 62, on right: 54
+mulOpFactor (81)
+    on left: 63 64, on right: 63 65
+term (82)
+    on left: 65, on right: 58 59
 factor (83)
-    on left: 70, on right: 61 63 68
-functionReference (84)
-    on left: 71, on right: 67
-addOp (85)
-    on left: 72 73, on right: 57
-mulOp (86)
-    on left: 74 75 76, on right: 61
-sign (87)
-    on left: 77 78, on right: 56
+    on left: 66, on right: 63 65 71
+factorOptions (84)
+    on left: 67 68 69 70 71 72, on right: 66
+functionReference (85)
+    on left: 73, on right: 70
+addOp (86)
+    on left: 74 75, on right: 59
+mulOp (87)
+    on left: 76 77 78, on right: 63
 typeDefinitions (88)
     on left: 79 80, on right: 1
 multipleTypeDefs (89)
@@ -764,11 +764,11 @@ state 50
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 76
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 51
@@ -777,11 +777,11 @@ state 51
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 79
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 52
@@ -999,9 +999,9 @@ state 74
 
 state 75
 
-   77 sign: ADDOP .
+   56 sign: ADDOP .
 
-    $default  reduce using rule 77 (sign)
+    $default  reduce using rule 56 (sign)
 
 
 state 76
@@ -1015,32 +1015,32 @@ state 76
 
 state 77
 
-   54 expression: simpleExpression . relationalOp simpleExpression
-   55           | simpleExpression .
+   58 simpleExpression: sign . term addOpTerm
 
-    RELATIONAL  shift, and go to state 98
-    EQUALS      shift, and go to state 99
+    NOT             shift, and go to state 98
+    PAREN_L         shift, and go to state 99
+    INT             shift, and go to state 100
+    ID              shift, and go to state 101
+    STRING_LITERAL  shift, and go to state 102
 
-    $default  reduce using rule 55 (expression)
-
-    relationalOp  go to state 100
+    variable           go to state 103
+    term               go to state 104
+    factor             go to state 105
+    factorOptions      go to state 106
+    functionReference  go to state 107
 
 
 state 78
 
-   56 simpleExpression: sign . term addOpTerm
+   54 expression: simpleExpression . relationalOp simpleExpression
+   55           | simpleExpression .
 
-    NOT             shift, and go to state 101
-    PAREN_L         shift, and go to state 102
-    INT             shift, and go to state 103
-    ID              shift, and go to state 104
-    STRING_LITERAL  shift, and go to state 105
+    RELATIONAL  shift, and go to state 108
+    EQUALS      shift, and go to state 109
 
-    variable           go to state 106
-    term               go to state 107
-    factorOptions      go to state 108
-    factor             go to state 109
-    functionReference  go to state 110
+    $default  reduce using rule 55 (expression)
+
+    relationalOp  go to state 110
 
 
 state 79
@@ -1064,13 +1064,13 @@ state 81
     ADDOP  shift, and go to state 75
 
     PAREN_R   reduce using rule 49 (actualParameterList)
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     apList               go to state 113
     actualParameterList  go to state 114
     expression           go to state 115
-    simpleExpression     go to state 77
-    sign                 go to state 78
+    sign                 go to state 77
+    simpleExpression     go to state 78
 
 
 state 82
@@ -1079,11 +1079,11 @@ state 82
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 116
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 83
@@ -1145,11 +1145,11 @@ state 88
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 118
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 89
@@ -1210,11 +1210,11 @@ state 96
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 123
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 97
@@ -1245,73 +1245,47 @@ state 97
 
 state 98
 
-   59 relationalOp: RELATIONAL .
+   71 factorOptions: NOT . factor
 
-    $default  reduce using rule 59 (relationalOp)
+    NOT             shift, and go to state 98
+    PAREN_L         shift, and go to state 99
+    INT             shift, and go to state 100
+    ID              shift, and go to state 101
+    STRING_LITERAL  shift, and go to state 102
+
+    variable           go to state 103
+    factor             go to state 126
+    factorOptions      go to state 106
+    functionReference  go to state 107
 
 
 state 99
 
-   60 relationalOp: EQUALS .
+   72 factorOptions: PAREN_L . expression PAREN_R
 
-    $default  reduce using rule 60 (relationalOp)
+    ADDOP  shift, and go to state 75
+
+    $default  reduce using rule 57 (sign)
+
+    expression        go to state 127
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 100
 
-   54 expression: simpleExpression relationalOp . simpleExpression
+   67 factorOptions: INT .
 
-    ADDOP  shift, and go to state 75
-
-    $default  reduce using rule 78 (sign)
-
-    simpleExpression  go to state 126
-    sign              go to state 78
+    $default  reduce using rule 67 (factorOptions)
 
 
 state 101
 
-   68 factorOptions: NOT . factor
-
-    NOT             shift, and go to state 101
-    PAREN_L         shift, and go to state 102
-    INT             shift, and go to state 103
-    ID              shift, and go to state 104
-    STRING_LITERAL  shift, and go to state 105
-
-    variable           go to state 106
-    factorOptions      go to state 108
-    factor             go to state 127
-    functionReference  go to state 110
-
-
-state 102
-
-   69 factorOptions: PAREN_L . expression PAREN_R
-
-    ADDOP  shift, and go to state 75
-
-    $default  reduce using rule 78 (sign)
-
-    expression        go to state 128
-    simpleExpression  go to state 77
-    sign              go to state 78
-
-
-state 103
-
-   64 factorOptions: INT .
-
-    $default  reduce using rule 64 (factorOptions)
-
-
-state 104
-
    50 variable: ID . componentSelection
-   71 functionReference: ID . PAREN_L actualParameterList PAREN_R
+   73 functionReference: ID . PAREN_L actualParameterList PAREN_R
 
     STOP     shift, and go to state 80
-    PAREN_L  shift, and go to state 129
+    PAREN_L  shift, and go to state 128
     ARRAY_L  shift, and go to state 82
 
     $default  reduce using rule 53 (componentSelection)
@@ -1319,59 +1293,85 @@ state 104
     componentSelection  go to state 83
 
 
+state 102
+
+   68 factorOptions: STRING_LITERAL .
+
+    $default  reduce using rule 68 (factorOptions)
+
+
+state 103
+
+   69 factorOptions: variable .
+
+    $default  reduce using rule 69 (factorOptions)
+
+
+state 104
+
+   58 simpleExpression: sign term . addOpTerm
+
+    OR     shift, and go to state 129
+    ADDOP  shift, and go to state 130
+
+    $default  reduce using rule 60 (addOpTerm)
+
+    addOpTerm  go to state 131
+    addOp      go to state 132
+
+
 state 105
 
-   65 factorOptions: STRING_LITERAL .
+   65 term: factor . mulOpFactor
 
-    $default  reduce using rule 65 (factorOptions)
+    AND      shift, and go to state 133
+    MOD      shift, and go to state 134
+    MULTIOP  shift, and go to state 135
+
+    $default  reduce using rule 64 (mulOpFactor)
+
+    mulOpFactor  go to state 136
+    mulOp        go to state 137
 
 
 state 106
 
-   66 factorOptions: variable .
+   66 factor: factorOptions .
 
-    $default  reduce using rule 66 (factorOptions)
+    $default  reduce using rule 66 (factor)
 
 
 state 107
 
-   56 simpleExpression: sign term . addOpTerm
+   70 factorOptions: functionReference .
 
-    OR     shift, and go to state 130
-    ADDOP  shift, and go to state 131
-
-    $default  reduce using rule 58 (addOpTerm)
-
-    addOpTerm  go to state 132
-    addOp      go to state 133
+    $default  reduce using rule 70 (factorOptions)
 
 
 state 108
 
-   70 factor: factorOptions .
+   61 relationalOp: RELATIONAL .
 
-    $default  reduce using rule 70 (factor)
+    $default  reduce using rule 61 (relationalOp)
 
 
 state 109
 
-   63 term: factor . mulOpFactor
+   62 relationalOp: EQUALS .
 
-    AND      shift, and go to state 134
-    MOD      shift, and go to state 135
-    MULTIOP  shift, and go to state 136
-
-    $default  reduce using rule 62 (mulOpFactor)
-
-    mulOpFactor  go to state 137
-    mulOp        go to state 138
+    $default  reduce using rule 62 (relationalOp)
 
 
 state 110
 
-   67 factorOptions: functionReference .
+   54 expression: simpleExpression relationalOp . simpleExpression
 
-    $default  reduce using rule 67 (factorOptions)
+    ADDOP  shift, and go to state 75
+
+    $default  reduce using rule 57 (sign)
+
+    sign              go to state 77
+    simpleExpression  go to state 138
 
 
 state 111
@@ -1496,121 +1496,121 @@ state 125
 
 state 126
 
-   54 expression: simpleExpression relationalOp simpleExpression .
+   71 factorOptions: NOT factor .
 
-    $default  reduce using rule 54 (expression)
+    $default  reduce using rule 71 (factorOptions)
 
 
 state 127
 
-   68 factorOptions: NOT factor .
-
-    $default  reduce using rule 68 (factorOptions)
-
-
-state 128
-
-   69 factorOptions: PAREN_L expression . PAREN_R
+   72 factorOptions: PAREN_L expression . PAREN_R
 
     PAREN_R  shift, and go to state 149
 
 
-state 129
+state 128
 
-   71 functionReference: ID PAREN_L . actualParameterList PAREN_R
+   73 functionReference: ID PAREN_L . actualParameterList PAREN_R
 
     ADDOP  shift, and go to state 75
 
     PAREN_R   reduce using rule 49 (actualParameterList)
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     apList               go to state 113
     actualParameterList  go to state 150
     expression           go to state 115
-    simpleExpression     go to state 77
-    sign                 go to state 78
+    sign                 go to state 77
+    simpleExpression     go to state 78
+
+
+state 129
+
+   75 addOp: OR .
+
+    $default  reduce using rule 75 (addOp)
 
 
 state 130
 
-   73 addOp: OR .
+   74 addOp: ADDOP .
 
-    $default  reduce using rule 73 (addOp)
+    $default  reduce using rule 74 (addOp)
 
 
 state 131
 
-   72 addOp: ADDOP .
+   58 simpleExpression: sign term addOpTerm .
 
-    $default  reduce using rule 72 (addOp)
+    $default  reduce using rule 58 (simpleExpression)
 
 
 state 132
 
-   56 simpleExpression: sign term addOpTerm .
+   59 addOpTerm: addOp . term addOpTerm
 
-    $default  reduce using rule 56 (simpleExpression)
+    NOT             shift, and go to state 98
+    PAREN_L         shift, and go to state 99
+    INT             shift, and go to state 100
+    ID              shift, and go to state 101
+    STRING_LITERAL  shift, and go to state 102
+
+    variable           go to state 103
+    term               go to state 151
+    factor             go to state 105
+    factorOptions      go to state 106
+    functionReference  go to state 107
 
 
 state 133
 
-   57 addOpTerm: addOp . term addOpTerm
+   78 mulOp: AND .
 
-    NOT             shift, and go to state 101
-    PAREN_L         shift, and go to state 102
-    INT             shift, and go to state 103
-    ID              shift, and go to state 104
-    STRING_LITERAL  shift, and go to state 105
-
-    variable           go to state 106
-    term               go to state 151
-    factorOptions      go to state 108
-    factor             go to state 109
-    functionReference  go to state 110
+    $default  reduce using rule 78 (mulOp)
 
 
 state 134
 
-   76 mulOp: AND .
+   77 mulOp: MOD .
 
-    $default  reduce using rule 76 (mulOp)
+    $default  reduce using rule 77 (mulOp)
 
 
 state 135
 
-   75 mulOp: MOD .
+   76 mulOp: MULTIOP .
 
-    $default  reduce using rule 75 (mulOp)
+    $default  reduce using rule 76 (mulOp)
 
 
 state 136
 
-   74 mulOp: MULTIOP .
+   65 term: factor mulOpFactor .
 
-    $default  reduce using rule 74 (mulOp)
+    $default  reduce using rule 65 (term)
 
 
 state 137
 
-   63 term: factor mulOpFactor .
+   63 mulOpFactor: mulOp . factor mulOpFactor
 
-    $default  reduce using rule 63 (term)
+    NOT             shift, and go to state 98
+    PAREN_L         shift, and go to state 99
+    INT             shift, and go to state 100
+    ID              shift, and go to state 101
+    STRING_LITERAL  shift, and go to state 102
+
+    variable           go to state 103
+    factor             go to state 152
+    factorOptions      go to state 106
+    functionReference  go to state 107
 
 
 state 138
 
-   61 mulOpFactor: mulOp . factor mulOpFactor
+   54 expression: simpleExpression relationalOp simpleExpression .
 
-    NOT             shift, and go to state 101
-    PAREN_L         shift, and go to state 102
-    INT             shift, and go to state 103
-    ID              shift, and go to state 104
-    STRING_LITERAL  shift, and go to state 105
-
-    variable           go to state 106
-    factorOptions      go to state 108
-    factor             go to state 152
-    functionReference  go to state 110
+    $default  reduce using rule 54 (expression)
 
 
 state 139
@@ -1633,12 +1633,12 @@ state 141
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     apList            go to state 153
     expression        go to state 115
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 142
@@ -1696,11 +1696,11 @@ state 147
 
     ADDOP  shift, and go to state 75
 
-    $default  reduce using rule 78 (sign)
+    $default  reduce using rule 57 (sign)
 
     expression        go to state 162
-    simpleExpression  go to state 77
-    sign              go to state 78
+    sign              go to state 77
+    simpleExpression  go to state 78
 
 
 state 148
@@ -1729,43 +1729,43 @@ state 148
 
 state 149
 
-   69 factorOptions: PAREN_L expression PAREN_R .
+   72 factorOptions: PAREN_L expression PAREN_R .
 
-    $default  reduce using rule 69 (factorOptions)
+    $default  reduce using rule 72 (factorOptions)
 
 
 state 150
 
-   71 functionReference: ID PAREN_L actualParameterList . PAREN_R
+   73 functionReference: ID PAREN_L actualParameterList . PAREN_R
 
     PAREN_R  shift, and go to state 165
 
 
 state 151
 
-   57 addOpTerm: addOp term . addOpTerm
+   59 addOpTerm: addOp term . addOpTerm
 
-    OR     shift, and go to state 130
-    ADDOP  shift, and go to state 131
+    OR     shift, and go to state 129
+    ADDOP  shift, and go to state 130
 
-    $default  reduce using rule 58 (addOpTerm)
+    $default  reduce using rule 60 (addOpTerm)
 
     addOpTerm  go to state 166
-    addOp      go to state 133
+    addOp      go to state 132
 
 
 state 152
 
-   61 mulOpFactor: mulOp factor . mulOpFactor
+   63 mulOpFactor: mulOp factor . mulOpFactor
 
-    AND      shift, and go to state 134
-    MOD      shift, and go to state 135
-    MULTIOP  shift, and go to state 136
+    AND      shift, and go to state 133
+    MOD      shift, and go to state 134
+    MULTIOP  shift, and go to state 135
 
-    $default  reduce using rule 62 (mulOpFactor)
+    $default  reduce using rule 64 (mulOpFactor)
 
     mulOpFactor  go to state 167
-    mulOp        go to state 138
+    mulOp        go to state 137
 
 
 state 153
@@ -1861,23 +1861,23 @@ state 164
 
 state 165
 
-   71 functionReference: ID PAREN_L actualParameterList PAREN_R .
+   73 functionReference: ID PAREN_L actualParameterList PAREN_R .
 
-    $default  reduce using rule 71 (functionReference)
+    $default  reduce using rule 73 (functionReference)
 
 
 state 166
 
-   57 addOpTerm: addOp term addOpTerm .
+   59 addOpTerm: addOp term addOpTerm .
 
-    $default  reduce using rule 57 (addOpTerm)
+    $default  reduce using rule 59 (addOpTerm)
 
 
 state 167
 
-   61 mulOpFactor: mulOp factor mulOpFactor .
+   63 mulOpFactor: mulOp factor mulOpFactor .
 
-    $default  reduce using rule 61 (mulOpFactor)
+    $default  reduce using rule 63 (mulOpFactor)
 
 
 state 168

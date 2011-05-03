@@ -59,6 +59,7 @@
     char* strVal;
     token chain;
     type_entry type;
+    tree_node node;
 }
 
 %%
@@ -120,20 +121,20 @@ subprogramDeclarations:
 functionDeclaration: 
         func ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
         {
-            printf("function.\n");
+            //printf("function.\n");
             token t = $<chain>4;
             
             symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<type>7, FUNCTIONSYM);
-            printf("installed symbol entry for function %s\n", func->symbol );
+            //printf("installed symbol entry for function %s\n", func->symbol );
 
             func->numParameters = lengthOf(t);
-            printf("number of parameters: %d\n", func->numParameters);
+            //printf("number of parameters: %d\n", func->numParameters);
             func->innerScope = currentSymbolTable;
             int i = 0;
             while(t){
 
                 symbol_entry s = findSymbol(currentSymbolTable, t->value, 0, BASICSYM);
-                printf("adding symbol entry to parameters list: %s\n", s->symbol );
+                //printf("adding symbol entry to parameters list: %s\n", s->symbol );
                 func->parameters[i] = s;
                 i++;
                 t = t->next;
@@ -182,7 +183,7 @@ procedureDeclaration:
                 i++;
                 t = t->next;
             }
-            printf("done");
+            //printf("done");
             $<type>$ = NULL;
             retreat();
             
@@ -312,7 +313,11 @@ assignmentStatement:
                     yyerror("type clash");
                     YYERROR;
                 }
-                
+                tree_node n = $<node>$ = new_nodea();
+                n->left = $<node>1; 
+                n->right = $<node>3;
+                setops(n, ":=", "");
+                output(n);
             }
         ;
 procedureStatement:
@@ -376,6 +381,15 @@ variable:
         // record[32].id
         // record.record.id
         $<type>$ = resolveStructuredType(currentSymbolTable, $<strVal>1, $<chain>2);
+        
+        //assuming just ID
+        
+        tree_node component = $<node>2;
+        tree_node n;
+        if(component){
+            n = $<node>$ = $<node>2;
+        } else n = leaf_for($<strVal>1, BASICSYM);
+        
     }
     ;
 componentSelection:
@@ -385,6 +399,12 @@ componentSelection:
             $<chain>$->value = (char*)calloc(strlen($<strVal>2), sizeof(char));
             sprintf($<chain>$->value, "%s", $<strVal>2);
             $<chain>$->next = $<chain>3;
+            tree_node component = $<node>3;
+            tree_node n = $<node>$ = NULL;
+            //some crazy shit needs to happen here. Need to search WITHIN the records symbols to get the address of this ID....
+            
+            
+            
         }
     | ARRAY_L expression ARRAY_R componentSelection
         {
@@ -395,10 +415,13 @@ componentSelection:
             $<chain>$ = (token)malloc(sizeof(struct token_struct));
             $<chain>$->value = (char*)calloc(strlen("array"), sizeof(char));
             sprintf($<chain>$->value, "array");
+            tree_node n = $<node>$ = NULL;
         }
     | /*empty*/
-    {$<chain>$ = NULL;}
+    {$<chain>$ = NULL; $<node>$ = NULL;}
     ;
+    
+/*    a = b | a < b | a + b <= c*d-4  */
 expression:
     simpleExpression relationalOp simpleExpression
         {
@@ -408,16 +431,24 @@ expression:
             if($<type>1 != $<type>3){
                 yyerror("types don't match (expression)");
             }
-            
-            
+            tree_node n = $<node>$ = new_node();
+            setops(n, $<strVal>2, "");
+            n->left = $<node>1;
+            n->right = $<node>3; 
             }
     | simpleExpression
         {
             reg("expression");
+            printf("simpleExpression type: %s\n", $<type>1->name);
             $<type>$ = $<type>1;
+            $<node>$ = $<node>1;
             }
     ;
     
+sign:
+    ADDOP {reg("sign"); $<strVal>$ = $<strVal>1;} | /*empty*/ {$<strVal>$ = 0;}
+    ;
+/*  - b | -b + 3 | a*b+c/d */
 simpleExpression:
     sign term addOpTerm
         {
@@ -425,24 +456,56 @@ simpleExpression:
             $<type>$ = $<type>2;
             if($<type>3 && $<type>2 != $<type>3){
                 yyerror("type mismatch (addOpTerm)");
-            }            
+            }
+            //
+            tree_node addop = $<node>3;
+            tree_node n = $<node>$ = addop ? addop : new_nodea();
+            char * sign;
+            if(sign = $<strVal>1){
+                tree_node lft = new_nodea();
+                setops(lft, sign, "");
+                lft->left = $<node>2;
+                n->left = lft;
+            }
+            else{
+                n->left = $<node>2;
+            }
         }
     ;
 addOpTerm:
     addOp term addOpTerm
     {
+        
         $<type>$ = $<type>2;
         if($<type>3 && $<type>2 != $<type>3){
             yyerror("type mismatch (addOpTerm)");
         }
+        tree_node n = $<node>$ = new_nodea();
+        setops(n, $<strVal>1, "");
+        tree_node three;
+        if(three = $<node>3){
+            n->right = three;
+            three->left = $<node>2;
+        }
+        else n->right = $<node>2;
+        
     }
     | /*empty*/
-    {$<type>$ = NULL;}
+    {$<type>$ = NULL; $<node>$ = NULL;}
     ;
 relationalOp:
-    RELATIONAL | EQUALS
-        {reg("relationalOp");}
+    RELATIONAL 
+        {
+            reg("relationalOp");
+            $<strVal>$ = $<strVal>1;
+        }
+    | EQUALS
+        {
+            reg("relationalOp");
+            $<strVal>$ = $<strVal>1;
+        }
     ;
+    /* *a | *a div b    */
 mulOpFactor:
     mulOp factor mulOpFactor
     {
@@ -452,10 +515,19 @@ mulOpFactor:
             YYERROR;
         }
         
+        tree_node n = new_node();
+        n->addr = gen_address();
+        setops(n, $<strVal>1, "");
+        tree_node mof = $<node>3;
+        if(mof){
+            n->right = mof;
+            n->right->left = $<node>2;
+        } else n->right = $<node>2;
     }
     | /*empty*/
     {
         $<type>$ = NULL;
+        $<node>$ = NULL;
     }
     ;
 term:
@@ -467,43 +539,59 @@ term:
                 yyerror("Incompatible types detected (factor mulOpFactor)");
                 YYERROR;
             }
+            tree_node mulop = $<node>2;
+            tree_node n = $<node>$ = mulop ? mulop : $<node>1;
+        }
+    ;
+factor:
+    factorOptions
+        {
+            reg("factor");
+            printf("factor type: %s\n", $<type>1->name);
+            $<type>$ = $<type>1;
+            $<node>$ = $<node>1;
+            
         }
     ;
 factorOptions:
     INT
     {
         $<type>$ = installNumber($<intVal>$)->type_pointer;
+        tree_node n = $<node>$ = new_node();
+        leaf(n, $<strVal>1);
         
     } 
     | STRING_LITERAL
     {
-        $<type>$ = resolveType(currentSymbolTable, "string");
+        //printf("resolving string literal\n");
+        $<type>$ = findBaseType("string");
+        tree_node n = $<node>$ = new_node();
+        leaf(n, $<strVal>1);
     }
     | variable
     {
         $<type>$ = $<type>1;
+        tree_node n = $<node>$ = new_node();
+        
     }
     | functionReference
     {
         reg("factorOptions (function)");
         $<type>$ = $<type>1;
+        printf("WARNING: not assigning node, function ref\n");
     }
     | NOT factor
     {
         $<type>$ = $<type>2;
+        printf("WARNING: not assigning node, NOT factor\n");
     } 
     | PAREN_L expression PAREN_R
     {
         $<type>$ = $<type>2;
+        printf("WARNING: not assigning node, array\n");
     }
     ;
-factor:
-    factorOptions
-        {
-            reg("factor");
-            $<type>$ = $<type>1;
-        }
-    ;
+
 functionReference:
     ID PAREN_L actualParameterList PAREN_R
         {
@@ -521,7 +609,7 @@ functionReference:
                   token t = $<chain>3;
                   int i = 0;
                   for(i = 0; i < s->numParameters; i++){
-                      printf("function call checking on %s\n", t->value);
+                      //printf("function call checking on %s\n", t->value);
                       type_entry actual = resolveType(currentSymbolTable, t->value);
                       type_entry declared = s->parameters[i]->type_pointer;
                       if(actual != declared){
@@ -548,9 +636,6 @@ mulOp:
         {reg("mulOp");}
     | AND
         {reg("mulOp");}
-    ;
-sign:
-    ADDOP {reg("sign");} | /*empty*/
     ;
     
 typeDefinitions: TYPE multipleTypeDefs
@@ -639,7 +724,7 @@ char **argv;
     yyparse();
 
     fclose(yyin);
-    printf("printing symbol table to symtable.out\n");
+    //printf("printing symbol table to symtable.out\n");
 //    printSymbolTables("symtable.out");
 //    printParseTable("rules.out");
 }

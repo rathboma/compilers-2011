@@ -4,7 +4,8 @@
 /* need this for the call to atof() below */
 #include <math.h>
 #include <string.h>
-#include "symbol_table.h"
+// code_tree includes symbol table
+#include "code_tree.h"
 #include "shared.h"
 #include "translate.tab.h"
 // SYMBOL DECLARATIONS
@@ -54,10 +55,13 @@ string_literal 	\"[^"]*\"
 "var"       {return(VAR);}
 "while"     {return(WHILE);}
 
-"+"|"-"         {return(ADDOP);}
-"*"|"div"         {return(MULTIOP);}
-"<" | ">" | "<="|">="|"<>"  {return(RELATIONAL);}
-"="             {return(EQUALS);}
+"+"|"-"         {setstr(yylval.strVal, yytext); return(ADDOP);}
+"*"|"div"       {
+                    setstr(yylval.strVal, (strcmp(yytext, "div") == 0 ? "/" : yytext)); 
+                    return(MULTIOP);
+                }
+"<" | ">" | "<="|">="|"<>"  {setstr(yylval.strVal, yytext); return(RELATIONAL);}
+"="             {setstr(yylval.strVal, yytext); return(EQUALS);}
 "."                 {return(STOP);} 
 ","                 {return(SEPARATOR);} 
 ":"                 {return(DECLARE);} 
@@ -78,11 +82,14 @@ string_literal 	\"[^"]*\"
                         return(ID);
                         
                         }
-{int}               {yylval.intVal = atoi(yytext); return(INT);}
+{int}               {
+    yylval.intVal = atoi(yytext); return(INT);
+    yylval.strVal = calloc(strlen(yytext), sizeof(char));
+    strcpy(yylval.strVal, yytext);
+    }
 {float}            {yylval.doubleVal = atof(yytext); return(FLOAT);}
 {string_literal}    {
-                        yylval.strVal = calloc(strlen(yytext), sizeof(char));
-                        strcpy(yylval.strVal, yytext); 
+                        setstr(yylval.strVal, yytext);
                         return(STRING_LITERAL);
                     }
 
