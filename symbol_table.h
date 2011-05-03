@@ -188,7 +188,7 @@ symbol_entry installNumber(int value){
     }
     
     newt->intVal = value;
-    newt->type_pointer = resolveType(currentSymbolTable, "integer");
+    newt->type_pointer = findBaseType("integer");
 }
 
 symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolType)
@@ -200,7 +200,7 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     // 5. if not, search table and parents to resolve type
     // 6. if type resolved, add, otherwise, error
     
-    //printf("installing symbol '%s'\n", value);
+    printf("installing symbol '%s' with type '%s'\n", value, theType->name);
     //first see if the symbol already exists
     symbol_entry existing = findSymbol(t, value, 0, symbolType);
     if(existing) {

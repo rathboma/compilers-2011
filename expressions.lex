@@ -55,13 +55,21 @@ string_literal 	\"[^"]*\"
 "var"       {return(VAR);}
 "while"     {return(WHILE);}
 
-"+"|"-"         {setstr(yylval.strVal, yytext); return(ADDOP);}
+"+"|"-"         {
+                    yylval.strVal = calloc(strlen(yytext), sizeof(char));
+                    strcpy(yylval.strVal, yytext);
+                    return(ADDOP);
+                }
 "*"|"div"       {
-                    setstr(yylval.strVal, (strcmp(yytext, "div") == 0 ? "/" : yytext)); 
+                    yylval.strVal = calloc(strlen(yytext), sizeof(char));
+                    strcpy(yylval.strVal, yytext);
                     return(MULTIOP);
                 }
 "<" | ">" | "<="|">="|"<>"  {setstr(yylval.strVal, yytext); return(RELATIONAL);}
-"="             {setstr(yylval.strVal, yytext); return(EQUALS);}
+"="             {   yylval.strVal = calloc(strlen(yytext), sizeof(char));
+                    strcpy(yylval.strVal, yytext); 
+                    return(EQUALS);
+                }
 "."                 {return(STOP);} 
 ","                 {return(SEPARATOR);} 
 ":"                 {return(DECLARE);} 
@@ -89,7 +97,8 @@ string_literal 	\"[^"]*\"
     }
 {float}            {yylval.doubleVal = atof(yytext); return(FLOAT);}
 {string_literal}    {
-                        setstr(yylval.strVal, yytext);
+                        yylval.strVal = calloc(strlen(yytext), sizeof(char));
+                        strcpy(yylval.strVal, yytext);
                         return(STRING_LITERAL);
                     }
 

@@ -39,8 +39,7 @@ char * gen_address(){
 
 char* addr(symbol_entry s){
     if(!s->addr) {
-        s->addr = (char*) calloc(2, sizeof(char));
-        strcpy(s->addr, gen_address());
+        s->addr = gen_address();
     }
     return s->addr;
 }

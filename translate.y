@@ -6,6 +6,14 @@
 // #define YYLEX_PARAM   scanner
 #define YYPRINT
 
+    typedef struct lexwrapper * wrapper;
+    struct lexwrapper{
+        token chain;
+        tree_node node;
+        type_entry type;
+    }
+
+
 %}
 
 %token AND
@@ -57,9 +65,7 @@
     int intVal;
     double doubleVal;
     char* strVal;
-    token chain;
-    type_entry type;
-    tree_node node;
+    wrapper details;
 }
 
 %%
@@ -313,11 +319,11 @@ assignmentStatement:
                     yyerror("type clash");
                     YYERROR;
                 }
-                tree_node n = $<node>$ = new_nodea();
-                n->left = $<node>1; 
-                n->right = $<node>3;
-                setops(n, ":=", "");
-                output(n);
+                $<node>$ = new_nodea();
+                $<node>$->left = $<node>1; 
+                $<node>$->right = $<node>3;
+                setops($<node>$, ":=", "");
+                output($<node>$);
             }
         ;
 procedureStatement:
@@ -381,14 +387,14 @@ variable:
         // record[32].id
         // record.record.id
         $<type>$ = resolveStructuredType(currentSymbolTable, $<strVal>1, $<chain>2);
-        
+        printf("variable '%s', type: %s\n", $<strVal>1, $<type>$->name);
         //assuming just ID
         
         tree_node component = $<node>2;
-        tree_node n;
+
         if(component){
-            n = $<node>$ = $<node>2;
-        } else n = leaf_for($<strVal>1, BASICSYM);
+            $<node>$ = $<node>2;
+        } else $<node>$ = leaf_for($<strVal>1, BASICSYM);
         
     }
     ;
@@ -400,7 +406,7 @@ componentSelection:
             sprintf($<chain>$->value, "%s", $<strVal>2);
             $<chain>$->next = $<chain>3;
             tree_node component = $<node>3;
-            tree_node n = $<node>$ = NULL;
+            $<node>$ = NULL;
             //some crazy shit needs to happen here. Need to search WITHIN the records symbols to get the address of this ID....
             
             
@@ -415,7 +421,7 @@ componentSelection:
             $<chain>$ = (token)malloc(sizeof(struct token_struct));
             $<chain>$->value = (char*)calloc(strlen("array"), sizeof(char));
             sprintf($<chain>$->value, "array");
-            tree_node n = $<node>$ = NULL;
+            $<node>$ = NULL;
         }
     | /*empty*/
     {$<chain>$ = NULL; $<node>$ = NULL;}
@@ -431,10 +437,10 @@ expression:
             if($<type>1 != $<type>3){
                 yyerror("types don't match (expression)");
             }
-            tree_node n = $<node>$ = new_node();
-            setops(n, $<strVal>2, "");
-            n->left = $<node>1;
-            n->right = $<node>3; 
+            $<node>$ = new_node();
+            setops($<node>$, $<strVal>2, "");
+            $<node>$->left = $<node>1;
+            $<node>$->right = $<node>3; 
             }
     | simpleExpression
         {
@@ -454,22 +460,22 @@ simpleExpression:
         {
             reg("simpleExpression");
             $<type>$ = $<type>2;
+            
             if($<type>3 && $<type>2 != $<type>3){
                 yyerror("type mismatch (addOpTerm)");
             }
-            //
-            tree_node addop = $<node>3;
-            tree_node n = $<node>$ = addop ? addop : new_nodea();
-            char * sign;
-            if(sign = $<strVal>1){
+/*            if($<node>3) $<node>$ = $<node>3;
+            else $<node>$ = new_nodea();
+            if($<strVal>1){
                 tree_node lft = new_nodea();
-                setops(lft, sign, "");
+                setops(lft, $<strVal>1, "");
                 lft->left = $<node>2;
-                n->left = lft;
+                $<node>$->left = lft;
             }
             else{
-                n->left = $<node>2;
-            }
+                $<node>$->left = $<node>2;
+            }*/
+            printf("simpleExpressin type: %s\n", $<type>$->name);
         }
     ;
 addOpTerm:
@@ -480,14 +486,14 @@ addOpTerm:
         if($<type>3 && $<type>2 != $<type>3){
             yyerror("type mismatch (addOpTerm)");
         }
-        tree_node n = $<node>$ = new_nodea();
-        setops(n, $<strVal>1, "");
+        $<node>$ = new_nodea();
+        setops($<node>$, $<strVal>1, "");
         tree_node three;
         if(three = $<node>3){
-            n->right = three;
+            $<node>$->right = three;
             three->left = $<node>2;
         }
-        else n->right = $<node>2;
+        else {$<node>$->right = $<node>2;}
         
     }
     | /*empty*/
@@ -535,21 +541,25 @@ term:
         {
             reg("term");
             $<type>$ = $<type>1;
+            printf("term type: %s\n", $<type>$->name);
             if($<type>2 && $<type>1 != $<type>2){
                 yyerror("Incompatible types detected (factor mulOpFactor)");
                 YYERROR;
             }
             tree_node mulop = $<node>2;
-            tree_node n = $<node>$ = mulop ? mulop : $<node>1;
+            if(mulop){
+                $<node>$ = mulop;
+                mulop->left = $<node>1;
+            } else $<node>$ = $<node>1;
         }
     ;
 factor:
     factorOptions
         {
             reg("factor");
-            printf("factor type: %s\n", $<type>1->name);
+            printf("factor type: %s, node: %s\n", $<type>1->name, $<node>1->value ? $<node>1->value : $<node>1->addr);
             $<type>$ = $<type>1;
-            $<node>$ = $<node>1;
+            //$<node>$ = $<node>1;
             
         }
     ;
@@ -557,22 +567,21 @@ factorOptions:
     INT
     {
         $<type>$ = installNumber($<intVal>$)->type_pointer;
-        tree_node n = $<node>$ = new_node();
-        leaf(n, $<strVal>1);
+        $<node>$ = new_node();
+        leaf($<node>$, $<strVal>1);
         
     } 
     | STRING_LITERAL
     {
+        $<node>$ = new_node();
+        leaf($<node>$, $<strVal>1);
         //printf("resolving string literal\n");
         $<type>$ = findBaseType("string");
-        tree_node n = $<node>$ = new_node();
-        leaf(n, $<strVal>1);
     }
     | variable
     {
         $<type>$ = $<type>1;
-        tree_node n = $<node>$ = new_node();
-        
+        $<node>$ = $<node>1;
     }
     | functionReference
     {
