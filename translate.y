@@ -448,23 +448,24 @@ simpleExpression:
             
             type_check($<details>3, $<details>2);
             tree_node current;
-            if(current = $<details>3->node){
-                if($<strVal>1){
-                    tree_node lchild = new_nodea();
-                    setops(lchild, $<strVal>1, "");
-                    lchild->left = $<details>2->node;
-                    current->left = lchild;
-                } else current->left = $<details>2->node;
+            
+            //IGNORING the sign for now
+            
+            tree_node term = $<details>2->node;
+            
+            if($<details>3->node){
+                tree_node t = $<details>3->node;
+                while(t->left){t = t->left;}
+                t->left = term;
                 $<details>$ = $<details>3;
-            } else{
-              if($<strVal>1){
-                  $<details>$ = new_wrapper(0, $<details>2->type, new_nodea());
-                  setops($<details>$->node, $<strVal>1, "");
-                  $<details>$->node->left = $<details>2->node;
-              }else{
-                  $<details>$ = $<details>2;
-              }  
+            } else {
+                $<details>$ = $<details>2;
             }
+            $<details>$->type = $<details>2->type;
+            
+            
+
+
             
         }
     ;
@@ -502,16 +503,16 @@ relationalOp:
 mulOpFactor:
     mulOp factor mulOpFactor
     {
-        $<details>$ = $<details>2;
         type_check($<details>3, $<details>2);
-        tree_node n = $<details>$->node = new_node();
-        n->addr = gen_address();
-        setops(n, $<strVal>1, "");
-        tree_node mof = $<details>3->node;
-        if(mof){
-            n->right = mof;
-            n->right->left = $<details>2->node;
-        } else n->right = $<details>2->node;
+        
+        $<details>$ = new_wrapper($<details>2->chain, $<details>2->type, new_nodea());
+        setops($<details>$->node, $<strVal>1, "");
+        tree_node three = $<details>3->node;
+        if(three){
+            $<details>$->node->right = three;
+            three->left = $<details>2->node;
+        }
+        else {$<details>$->node->right = $<details>2->node;}
     }
     | /*empty*/
     {

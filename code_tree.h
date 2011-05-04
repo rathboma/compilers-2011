@@ -94,7 +94,7 @@ tree_node leaf(tree_node n, char* val){
 
 void output(tree_node n){
     if(!n) return;
-    printf("output called for node. leaf? %c, addr|val: %s|%s, l/r: %c/%c\n", (n->type == LEAF) ? 't' : 'f', n->addr, n->value, n->left ? 't' : 'f', n->right ? 't' : 'f');
+    //printf("output called for node. leaf? %c, addr|val: %s|%s, l/r: %c/%c\n", (n->type == LEAF) ? 't' : 'f', n->addr, n->value, n->left ? 't' : 'f', n->right ? 't' : 'f');
     if(n->type == LEAF) return;
     output(n->left);
     output(n->right);
@@ -103,7 +103,7 @@ void output(tree_node n){
     char* lop = n->lop ? n->lop : "";
     char* rop = n->rop ? n->rop : "";
     if(strcmp(n->lop, ":=") == 0 && n->left && n->right) printf("%s := %s\n", lval, rval);
-    else printf("%s := %s%s%s%s\n", n->addr, n->left->addr, lop, rval, rop );
+    else printf("%s := %s%s%s%s\n", n->addr, lval, lop, rval, rop );
 }
 
 
