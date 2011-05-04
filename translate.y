@@ -1,17 +1,12 @@
 %{
 #include "lex.yy.c"
+#include <math.h>
 //#include "symbol_table.h"
 /* Pass the argument to yyparse through to yylex. */
 // #define YYPARSE_PARAM scanner
 // #define YYLEX_PARAM   scanner
 #define YYPRINT
-
-    typedef struct lexwrapper * wrapper;
-    struct lexwrapper{
-        token chain;
-        tree_node node;
-        type_entry type;
-    }
+    
 
 
 %}
@@ -87,9 +82,9 @@ multiVarDeclarations:
 variableDeclaration:
         identifierList DECLARE type
         {
-            token t = $<chain>1;
+            token t = $<details>1->chain;
             while(t){
-                installSymbol(currentSymbolTable, t->value, $<type>3, BASICSYM);
+                installSymbol(currentSymbolTable, t->value, $<details>3->type, BASICSYM);
                 t = t->next;
             }
         }
@@ -98,23 +93,23 @@ variableDeclaration:
 identifierList:
         ID multiIds
         {
-            
-            $<chain>$ = (token) malloc(sizeof(struct token_struct));
-            $<chain>$->value = calloc(strlen($<strVal>1), sizeof(char));
-            strcpy($<chain>$->value, $<strVal>1 );
-            $<chain>$->next = $<chain>2;
+            $<details>$ = new_wrapper(0, 0, 0);
+            $<details>$->chain = (token) malloc(sizeof(struct token_struct));
+            $<details>$->chain->value = calloc(strlen($<strVal>1), sizeof(char));
+            strcpy($<details>$->chain->value, $<strVal>1 );
+            $<details>$->chain->next = $<details>2->chain;
             reg("identifierList");
         }
         ;
 multiIds: SEPARATOR identifierList
         {
-            $<chain>$ = $<chain>2;
+            $<details>$ = $<details>2;
 
         }
         | /*empty*/
         {
 
-            $<chain>$ = NULL;
+            $<details>$ = new_wrapper(0, 0, 0);
         }
         ;
 subprogramDeclarations:
@@ -128,9 +123,9 @@ functionDeclaration:
         func ID PAREN_L formalParameterList PAREN_R DECLARE resultType EOL blockOrForward
         {
             //printf("function.\n");
-            token t = $<chain>4;
+            token t = $<details>4->chain;
             
-            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<type>7, FUNCTIONSYM);
+            symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<details>7->type, FUNCTIONSYM);
             //printf("installed symbol entry for function %s\n", func->symbol );
 
             func->numParameters = lengthOf(t);
@@ -145,7 +140,7 @@ functionDeclaration:
                 i++;
                 t = t->next;
             }
-            $<type>$ = $<type>7;
+            $<details>$ = $<details>7;
             retreat();
             
             //formalParameterList = list of tokens
@@ -158,7 +153,7 @@ functionDeclaration:
 resultType:
     ID
     {
-        $<type>$ = resolveType(currentSymbolTable->parent, $<strVal>1);
+        $<details>$ = new_wrapper(0, resolveType(currentSymbolTable->parent, $<strVal>1), 0);
         reg("resultType");
     }
     ;
@@ -178,7 +173,7 @@ PROCEDURE
 procedureDeclaration:
         proc ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
         {
-            token t = $<chain>4;
+            token t = $<details>4->chain;
             symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, NULL, PROCEDURESYM);
             func->numParameters = lengthOf(t);
             func->innerScope = currentSymbolTable;
@@ -190,7 +185,7 @@ procedureDeclaration:
                 t = t->next;
             }
             //printf("done");
-            $<type>$ = NULL;
+            $<details>$ = new_wrapper(0, 0, 0);
             retreat();
             
             //formalParameterList = list of tokens
@@ -219,39 +214,37 @@ block:  variableDeclarations compoundStatement
 paramDeclare:
     identifierList DECLARE type
     {
-        token t = $<chain>1;
+        token t = $<details>1->chain;
         while(t){
             
-            installSymbol(currentSymbolTable, t->value, $<type>3, BASICSYM);
-            
+            installSymbol(currentSymbolTable, t->value, $<details>3->type, BASICSYM);
             t = t->next;
         }
-
-        $<chain>$ = $<chain>1;
-        //printTokenChain($<chain>$);
+        $<details>$ = $<details>1;
+        //printTokenChain($<details>$->chain);
     }
     ;
 
 paramList:
         paramList EOL paramDeclare
         {
-            $<chain>$ = $<chain>1;
-            token t = $<chain>1;
+            $<details>$ = $<details>1;
+            token t = $<details>1->chain;
             while(t->next){t = t->next;}
-            t->next = $<chain>3;
+            t->next = $<details>3->chain;
         }
         | paramDeclare 
-        {$<chain>$ = $<chain>1;}
+        {$<details>$ = $<details>1;}
         ;
 formalParameterList:
         paramList 
         {
-            $<chain>$ = $<chain>1;
+            $<details>$ = $<details>1;
             reg("formalParameterList");
         }
         | /*empty*/
         {
-            $<chain>$ = NULL;
+            $<details>$ = new_wrapper(0, 0, 0);
         }
         ;
 
@@ -312,18 +305,13 @@ assignmentStatement:
         variable ASSIGNMENT expression
             {
                 reg("assignment");
-                type_entry a = $<type>1;
-                type_entry b = $<type>3;
-                if(a != b){
-                    printf("BOOM! type chash: %s does not match type %s\n", a->name, b->name);
-                    yyerror("type clash");
-                    YYERROR;
-                }
-                $<node>$ = new_nodea();
-                $<node>$->left = $<node>1; 
-                $<node>$->right = $<node>3;
-                setops($<node>$, ":=", "");
-                output($<node>$);
+                type_check($<details>1, $<details>3);
+                
+                $<details>$ = new_wrapper(0, 0, new_nodea());
+                $<details>$->node->left = $<details>1->node; 
+                $<details>$->node->right = $<details>3->node;
+                setops($<details>$->node, ":=", "");
+                output($<details>$->node);
             }
         ;
 procedureStatement:
@@ -338,11 +326,11 @@ procedureStatement:
                 YYERROR;
             }
             
-            if(lengthOf($<chain>3) != s->numParameters){
+            if(lengthOf($<details>3->chain) != s->numParameters){
                 yyerror("wrong number of parameters");
                 YYERROR;
             }
-            token t = $<chain>3;
+            token t = $<details>3->chain;
             int i = 0;
             for(i = 0; i < s->numParameters; i++){
                 type_entry actual = resolveType(currentSymbolTable, t->value);
@@ -358,24 +346,24 @@ procedureStatement:
 apList:
         expression SEPARATOR apList
         {
-            $<chain>$ = (token) malloc(sizeof(struct token_struct));
-            $<chain>$->value = $<type>1->name;
-            $<chain>$->next = $<chain>3;
+            $<details>$ = new_wrapper(new_token(), 0, 0);
+            $<details>$->chain->value = $<details>1->type->name;
+            $<details>$->chain->next = $<details>3->chain;
         }
         | expression
         {
-            $<chain>$ = (token) malloc(sizeof(struct token_struct));
-            $<chain>$->value = $<type>1->name;
+            $<details>$ = new_wrapper(new_token(), 0, 0);
+            $<details>$->chain->value = $<details>1->type->name;
         }
         ;
 actualParameterList:
         apList 
         {
-            $<chain>$ = $<chain>1;
+            $<details>$ = $<details>1;
         }
         | /*empty*/
         {
-            $<chain>$ = NULL;
+            $<details>$ = new_wrapper(0, 0, 0);
         }
         ;
         
@@ -386,27 +374,27 @@ variable:
         // record.id
         // record[32].id
         // record.record.id
-        $<type>$ = resolveStructuredType(currentSymbolTable, $<strVal>1, $<chain>2);
-        printf("variable '%s', type: %s\n", $<strVal>1, $<type>$->name);
+        $<details>$ = new_wrapper(0, resolveStructuredType(currentSymbolTable, $<strVal>1, $<details>2->chain), 0 );
+        //printf("variable '%s', type: %s\n", $<strVal>1, $<details>$->type->name);
         //assuming just ID
         
-        tree_node component = $<node>2;
+        tree_node component = $<details>2->node;
 
         if(component){
-            $<node>$ = $<node>2;
-        } else $<node>$ = leaf_for($<strVal>1, BASICSYM);
+            $<details>$->node = $<details>2->node;
+        } else $<details>$->node = leaf_for($<strVal>1, BASICSYM);
         
     }
     ;
 componentSelection:
     STOP ID componentSelection
         {
-            $<chain>$ = (token) malloc(sizeof(struct token_struct));
-            $<chain>$->value = (char*)calloc(strlen($<strVal>2), sizeof(char));
-            sprintf($<chain>$->value, "%s", $<strVal>2);
-            $<chain>$->next = $<chain>3;
-            tree_node component = $<node>3;
-            $<node>$ = NULL;
+            $<details>$ = new_wrapper(new_token(), 0, 0);
+            $<details>$->chain->value = calloc(strlen($<strVal>2), sizeof(char));
+            strcpy($<details>$->chain->value, $<strVal>2);
+            $<details>$->chain->next = $<details>3->chain;
+            tree_node component = $<details>3->node;
+            
             //some crazy shit needs to happen here. Need to search WITHIN the records symbols to get the address of this ID....
             
             
@@ -414,17 +402,16 @@ componentSelection:
         }
     | ARRAY_L expression ARRAY_R componentSelection
         {
-            if(strcmp($<type>2->name, "integer") != 0){
+            if(strcmp($<details>2->type->name, "integer") != 0){
                 yyerror("expression in array parens is not integer");
                 YYERROR;
             }
-            $<chain>$ = (token)malloc(sizeof(struct token_struct));
-            $<chain>$->value = (char*)calloc(strlen("array"), sizeof(char));
-            sprintf($<chain>$->value, "array");
-            $<node>$ = NULL;
+            $<details>$ = new_wrapper(new_token(), 0, 0);
+            $<details>$->chain->value = calloc(strlen("array"), sizeof(char));
+            strcpy($<details>$->chain->value, "array");
         }
     | /*empty*/
-    {$<chain>$ = NULL; $<node>$ = NULL;}
+    {$<details>$ = new_wrapper(0, 0, 0);}
     ;
     
 /*    a = b | a < b | a + b <= c*d-4  */
@@ -432,22 +419,21 @@ expression:
     simpleExpression relationalOp simpleExpression
         {
             reg("expression");
-            
-            $<type>$ = $<type>1;
-            if($<type>1 != $<type>3){
+            $<details>$ = $<details>1;
+
+            if($<details>1->type != $<details>3->type){
                 yyerror("types don't match (expression)");
             }
-            $<node>$ = new_node();
-            setops($<node>$, $<strVal>2, "");
-            $<node>$->left = $<node>1;
-            $<node>$->right = $<node>3; 
+            $<details>$->node = new_node();
+            setops($<details>$->node, $<strVal>2, "");
+            $<details>$->node->left = $<details>1->node;
+            $<details>$->node->right = $<details>3->node; 
             }
     | simpleExpression
         {
             reg("expression");
-            printf("simpleExpression type: %s\n", $<type>1->name);
-            $<type>$ = $<type>1;
-            $<node>$ = $<node>1;
+            //printf("simpleExpression type: %s\n", $<details>1->type->name);
+            $<details>$ = $<details>1;
             }
     ;
     
@@ -459,45 +445,46 @@ simpleExpression:
     sign term addOpTerm
         {
             reg("simpleExpression");
-            $<type>$ = $<type>2;
             
-            if($<type>3 && $<type>2 != $<type>3){
-                yyerror("type mismatch (addOpTerm)");
+            type_check($<details>3, $<details>2);
+            tree_node current;
+            if(current = $<details>3->node){
+                if($<strVal>1){
+                    tree_node lchild = new_nodea();
+                    setops(lchild, $<strVal>1, "");
+                    lchild->left = $<details>2->node;
+                    current->left = lchild;
+                } else current->left = $<details>2->node;
+                $<details>$ = $<details>3;
+            } else{
+              if($<strVal>1){
+                  $<details>$ = new_wrapper(0, $<details>2->type, new_nodea());
+                  setops($<details>$->node, $<strVal>1, "");
+                  $<details>$->node->left = $<details>2->node;
+              }else{
+                  $<details>$ = $<details>2;
+              }  
             }
-/*            if($<node>3) $<node>$ = $<node>3;
-            else $<node>$ = new_nodea();
-            if($<strVal>1){
-                tree_node lft = new_nodea();
-                setops(lft, $<strVal>1, "");
-                lft->left = $<node>2;
-                $<node>$->left = lft;
-            }
-            else{
-                $<node>$->left = $<node>2;
-            }*/
-            printf("simpleExpressin type: %s\n", $<type>$->name);
+            
         }
     ;
 addOpTerm:
     addOp term addOpTerm
     {
+        type_check($<details>3, $<details>2);
         
-        $<type>$ = $<type>2;
-        if($<type>3 && $<type>2 != $<type>3){
-            yyerror("type mismatch (addOpTerm)");
+        $<details>$ = new_wrapper($<details>2->chain, $<details>2->type, new_nodea());
+        setops($<details>$->node, $<strVal>1, "");
+        tree_node three = $<details>3->node;
+        if(three){
+            $<details>$->node->right = three;
+            three->left = $<details>2->node;
         }
-        $<node>$ = new_nodea();
-        setops($<node>$, $<strVal>1, "");
-        tree_node three;
-        if(three = $<node>3){
-            $<node>$->right = three;
-            three->left = $<node>2;
-        }
-        else {$<node>$->right = $<node>2;}
+        else {$<details>$->node->right = $<details>2->node;}
         
     }
     | /*empty*/
-    {$<type>$ = NULL; $<node>$ = NULL;}
+    {$<details>$ = new_wrapper(0, 0, 0);}
     ;
 relationalOp:
     RELATIONAL 
@@ -515,88 +502,78 @@ relationalOp:
 mulOpFactor:
     mulOp factor mulOpFactor
     {
-        $<type>$ = $<type>2;
-        if($<type>3 && $<type>2 != $<type>3){
-            yyerror("Incompatible types detected (mulOp factor mulOpFactor)");
-            YYERROR;
-        }
-        
-        tree_node n = new_node();
+        $<details>$ = $<details>2;
+        type_check($<details>3, $<details>2);
+        tree_node n = $<details>$->node = new_node();
         n->addr = gen_address();
         setops(n, $<strVal>1, "");
-        tree_node mof = $<node>3;
+        tree_node mof = $<details>3->node;
         if(mof){
             n->right = mof;
-            n->right->left = $<node>2;
-        } else n->right = $<node>2;
+            n->right->left = $<details>2->node;
+        } else n->right = $<details>2->node;
     }
     | /*empty*/
     {
-        $<type>$ = NULL;
-        $<node>$ = NULL;
+        $<details>$ = new_wrapper(0, 0, 0);
     }
     ;
 term:
     factor mulOpFactor
         {
             reg("term");
-            $<type>$ = $<type>1;
-            printf("term type: %s\n", $<type>$->name);
-            if($<type>2 && $<type>1 != $<type>2){
-                yyerror("Incompatible types detected (factor mulOpFactor)");
-                YYERROR;
-            }
-            tree_node mulop = $<node>2;
+            type_check($<details>2, $<details>1);
+            tree_node mulop = $<details>2->node;
             if(mulop){
-                $<node>$ = mulop;
-                mulop->left = $<node>1;
-            } else $<node>$ = $<node>1;
+                $<details>$ = $<details>2;
+                mulop->left = $<details>1->node;
+            } else{
+                $<details>$ = $<details>1;
+            }
         }
     ;
 factor:
     factorOptions
         {
             reg("factor");
-            printf("factor type: %s, node: %s\n", $<type>1->name, $<node>1->value ? $<node>1->value : $<node>1->addr);
-            $<type>$ = $<type>1;
-            //$<node>$ = $<node>1;
+            //printf("factor type: %s, node: %s\n", $<details>1->type->name, $<details>1->node->value ? $<details>1->node->value : $<details>1->node->addr);
+            $<details>$ = $<details>1;
             
         }
     ;
 factorOptions:
     INT
     {
-        $<type>$ = installNumber($<intVal>$)->type_pointer;
-        $<node>$ = new_node();
-        leaf($<node>$, $<strVal>1);
+        $<details>$ = new_wrapper(0,installNumber($<strVal>1)->type_pointer, new_node());
+        printf("found int! %s\n", $<strVal>1);
+        leaf($<details>$->node, $<strVal>1);
         
     } 
     | STRING_LITERAL
     {
-        $<node>$ = new_node();
-        leaf($<node>$, $<strVal>1);
+        $<details>$ = new_wrapper(0, findBaseType("string"), new_node());
+        leaf($<details>$->node, $<strVal>1);
+        
         //printf("resolving string literal\n");
-        $<type>$ = findBaseType("string");
     }
     | variable
     {
-        $<type>$ = $<type>1;
-        $<node>$ = $<node>1;
+        $<details>$ = $<details>1;
     }
     | functionReference
     {
         reg("factorOptions (function)");
-        $<type>$ = $<type>1;
+        $<details>$ = $<details>1;
         printf("WARNING: not assigning node, function ref\n");
     }
     | NOT factor
     {
-        $<type>$ = $<type>2;
+        $<details>$ = $<details>2;
         printf("WARNING: not assigning node, NOT factor\n");
     } 
     | PAREN_L expression PAREN_R
     {
-        $<type>$ = $<type>2;
+        $<details>$ = $<details>2;
         printf("WARNING: not assigning node, array\n");
     }
     ;
@@ -611,11 +588,11 @@ functionReference:
                       YYERROR;
                   }
                   
-                  if(lengthOf($<chain>3) != s->numParameters){
+                  if(lengthOf($<details>3->chain) != s->numParameters){
                       yyerror("wrong number of parameters");
                       YYERROR;
                   }
-                  token t = $<chain>3;
+                  token t = $<details>3->chain;
                   int i = 0;
                   for(i = 0; i < s->numParameters; i++){
                       //printf("function call checking on %s\n", t->value);
@@ -627,16 +604,16 @@ functionReference:
                       }
                       t = t->next;
                   }
-                  $<type>$ = s->type_pointer;            
+                  $<details>$ = new_wrapper(0, s->type_pointer, 0);
         }
     ;
 
 
 addOp:
     ADDOP 
-        {reg("addOp");}
+        {reg("addOp"); $<strVal>$ = $<strVal>1;}
     | OR
-        {reg("addOp");}
+        {reg("addOp"); $<strVal>$ = $<strVal>1;}
     ;
 mulOp:
     MULTIOP 
@@ -659,7 +636,7 @@ typeDefinition:
         ID EQUALS type EOL
             {   
                 reg("typeDefinition");
-                installSymbol(currentSymbolTable, $<strVal>1, $<type>3, BASICSYM);
+                installSymbol(currentSymbolTable, $<strVal>1, $<details>3->type, BASICSYM);
              }
         ;
 
@@ -669,22 +646,23 @@ rec: RECORD
     }
 ;
 type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
-            {reg("type");
-                $<type>$ = $<type>8;
-                }
+            {
+                reg("type");
+                $<details>$ = $<details>8;
+            }
         | rec fieldList endOfBlock
             {
                 
                 reg("type");
                 type_entry t = installType("record");
                 t->scopedFields = currentSymbolTable;
-                $<type>$ = t;
+                $<details>$ = new_wrapper(0, t, 0);
                 retreat();
             }
         | ID
         {
-            $<type>$ = resolveType(currentSymbolTable, $<strVal>1);
-            if(!$<type>$){
+            $<details>$ = new_wrapper(0, resolveType(currentSymbolTable, $<strVal>1), 0 );
+            if(!$<details>$->type){
                 yyerror("type not found (type: ID)");
                 YYERROR;
             }
@@ -694,14 +672,14 @@ type: ARRAY ARRAY_L INT RANGE INT ARRAY_R OF type
 fieldList:
     paramDeclare EOL fieldList
     {   reg("fieldList");
-        $<chain>$ = $<chain>1;
-        token t = $<chain>1;
+        $<details>$ = $<details>1;
+        token t = $<details>1->chain;
         while(t->next){t = t->next;}
-        t->next = $<chain>3;
+        t->next = $<details>3->chain;
     }
     | paramDeclare
     {
-        $<chain>$ = $<chain>1;
+        $<details>$ = $<details>1;
     }
     ;
 endOfBlock:

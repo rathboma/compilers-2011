@@ -7,7 +7,7 @@ type
 var
 	z : string;
 	result : string;
+	a : integer;
 begin
-	z := "hello";
-	result := z;
+	a := 1 + 2;
 end.

@@ -13,6 +13,13 @@ typedef struct token_struct * token;
 struct token_struct{
     char* value;
     token next;
+};
+
+token new_token(){
+    token t = malloc(sizeof(struct token_struct));
+    t->value = 0;
+    t->next = 0;
+    return t;
 }
 
 addToChain(token t, char* nextValue){
@@ -177,7 +184,8 @@ symbol_entry find(char* value, int symbolType){
     return findSymbol(currentSymbolTable, value, 1, symbolType);
 }
 
-symbol_entry installNumber(int value){
+symbol_entry installNumber(char* v){
+    int value = atoi(v);
     symbol_entry entry = number_table.head;
     symbol_entry newt = malloc(sizeof(struct s_entry));
     if(!entry){

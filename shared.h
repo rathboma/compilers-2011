@@ -6,5 +6,5 @@
 
 
 void reg(char* message){
-    printf("REG: %s\n", message);
+    //printf("REG: %s\n", message);
 }

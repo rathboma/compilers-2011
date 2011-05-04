@@ -5,7 +5,7 @@
 #include <math.h>
 #include <string.h>
 // code_tree includes symbol table
-#include "code_tree.h"
+#include "wrapper.h"
 #include "shared.h"
 #include "translate.tab.h"
 // SYMBOL DECLARATIONS
@@ -45,7 +45,11 @@ string_literal 	\"[^"]*\"
 "mod"       {return(MOD);}
 "not"       {return(NOT);}
 "of"        {return(OF);}
-"or"        {return(OR);}
+"or"        {
+                yylval.strVal = calloc(strlen(yytext), sizeof(char));
+                strcpy(yylval.strVal, yytext);
+                return(OR);
+            }
 "procedure" {return(PROCEDURE);}
 "program"   {return(PROGRAM);}
 "record"    {return(RECORD);}
@@ -65,7 +69,7 @@ string_literal 	\"[^"]*\"
                     strcpy(yylval.strVal, yytext);
                     return(MULTIOP);
                 }
-"<" | ">" | "<="|">="|"<>"  {setstr(yylval.strVal, yytext); return(RELATIONAL);}
+"<" | ">" | "<="|">="|"<>"  {yylval.strVal = calloc(strlen(yytext), sizeof(char)); strcpy(yylval.strVal, yytext); return(RELATIONAL);}
 "="             {   yylval.strVal = calloc(strlen(yytext), sizeof(char));
                     strcpy(yylval.strVal, yytext); 
                     return(EQUALS);
@@ -88,12 +92,12 @@ string_literal 	\"[^"]*\"
                         strcpy(yylval.strVal, yytext);
                         //printf("lexed id: '%s'\n", yylval.strVal); 
                         return(ID);
-                        
                         }
 {int}               {
-    yylval.intVal = atoi(yytext); return(INT);
-    yylval.strVal = calloc(strlen(yytext), sizeof(char));
-    strcpy(yylval.strVal, yytext);
+        printf("found int (lex) %s\n", yytext);
+        yylval.strVal = calloc(strlen(yytext), sizeof(char));
+        strcpy(yylval.strVal, yytext);
+        return(INT);
     }
 {float}            {yylval.doubleVal = atof(yytext); return(FLOAT);}
 {string_literal}    {
