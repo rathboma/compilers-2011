@@ -10,7 +10,7 @@
 #define NODE 2
 
 
-typedef struct node_struct * tree_node;
+
 struct node_struct{
     char* value;
     char* addr;
@@ -39,7 +39,7 @@ char * gen_address(){
 
 char* addr(symbol_entry s){
     if(!s->addr) {
-        s->addr = gen_address();
+        s->addr = s->symbol;
     }
     return s->addr;
 }
@@ -60,6 +60,14 @@ tree_node leaf_for(char* val, int sym_type){
     tree_node n = new_node();
     n->type = LEAF;
     setaddr(n, addr(s));  
+    return n;
+}
+
+tree_node leaf_for_sym(symbol_entry s){
+    tree_node n = new_node();
+    n->type = LEAF;
+    setaddr(n, addr(s));
+    return n;
 }
 
 tree_node setaddr(tree_node n, char* addr){
@@ -76,12 +84,6 @@ void setops(tree_node n, char* op, char* op2){
 }
 
 
-tree_node new_leaf(){
-    tree_node n = new_node();
-    n->type = LEAF;
-    return n;
-}
-
 tree_node leaf(tree_node n, char* val){
     n->value = (char*)calloc(strlen(val), sizeof(char));
     strcpy(n->value, val);
@@ -91,6 +93,9 @@ tree_node leaf(tree_node n, char* val){
     return n;
 }
 
+void soutput(char* s){
+    printf("%s\n", s);
+}
 
 void output(tree_node n){
     if(!n) return;

@@ -94,7 +94,7 @@ string_literal 	\"[^"]*\"
                         return(ID);
                         }
 {int}               {
-        printf("found int (lex) %s\n", yytext);
+        //printf("found int (lex) %s\n", yytext);
         yylval.strVal = calloc(strlen(yytext), sizeof(char));
         strcpy(yylval.strVal, yytext);
         return(INT);

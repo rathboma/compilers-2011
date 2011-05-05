@@ -4,14 +4,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 void yyerror(char* message){
     printf("PARSER ERROR: %s\n", message);
     exit(1);
 }
-
+typedef struct node_struct * tree_node;
+struct node_struct;
 typedef struct token_struct * token;
 struct token_struct{
     char* value;
+    tree_node node;
     token next;
 };
 
@@ -82,6 +85,8 @@ struct tentry type_table = {0, 0, 0};
 
 table currentSymbolTable = &global_symbols;
 
+//stubs
+void insert(table, symbol_entry);
 
 //type table methods
 
@@ -97,10 +102,10 @@ type_entry installType(char* name){
 }
 
 type_entry findBaseType(char* name){
-    printf("looking for %s in base types\n", name);
+    //printf("looking for %s in base types\n", name);
     type_entry t = (&type_table)->next;
     while(t){
-        printf("checking %s\n", t->name);
+        //printf("checking %s\n", t->name);
         if(strcmp(name, t->name) == 0) return t;
         t = t->next;
     }
@@ -208,7 +213,7 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     // 5. if not, search table and parents to resolve type
     // 6. if type resolved, add, otherwise, error
     
-    printf("installing symbol '%s' with type '%s'\n", value, theType->name);
+    printf("installing symbol '%s' with type '%s'\n", value, theType ? theType->name : "(null)" );
     //first see if the symbol already exists
     symbol_entry existing = findSymbol(t, value, 0, symbolType);
     if(existing) {
@@ -228,16 +233,19 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     newEntry->type_pointer = new_type;
     newEntry->symbolType = symbolType;
     
+    insert(t, newEntry);
     //find somewhere in the symbol table to put it
-    symbol_entry parent = t->head;
 
-    if(!parent) {t->head = newEntry;}
+}
+
+void insert(table t, symbol_entry s){
+    symbol_entry parent = t->head;
+    if(!parent) {t->head = s;}
     else {
         while(parent->next){parent = parent->next;}
-        parent->next = newEntry;
+        parent->next = s;
     }    
-    //return the new entry
-    return(newEntry);
+    //return the new entry 
 }
 
 
@@ -254,6 +262,71 @@ void retreat(){
     else{
         //printf("WARNING: retreat called, but already at the top of the symbol table tree\n");
         }
+}
+
+table new_table(){
+    table t = (table) malloc(sizeof(struct tbl_struct));
+    t->head = 0;
+    t->parent = 0;
+}
+
+symbol_entry new_symbol(){
+    return (symbol_entry)malloc(sizeof(struct s_entry));
+}
+
+
+// struct s_entry{
+//     char* symbol;
+//     int intVal;
+//     type_entry type_pointer;
+//     symbol_entry next;
+//     int numParameters;
+//     symbol_entry parameters[100];
+//     table innerScope;
+//     int symbolType;
+//     char * addr;
+//     };
+
+void deep_symbol_copy(symbol_entry target, symbol_entry source){
+    target->intVal = source->intVal;
+    target->symbol = (char*) calloc(strlen(source->symbol), sizeof(char));
+    strcpy(target->symbol, source->symbol);
+    target->type_pointer = source->type_pointer;
+    //skip the procedure related stuff and the inner scope stuff. Will be covered external to this.
+    target->symbolType = source->symbolType;
+    //different address!
+}
+
+
+void deep_table_copy(symbol_entry target, table source){
+    if(!source) return;
+    if(!target->innerScope) target->innerScope = new_table();
+    symbol_entry s = source->head;
+    while(s){
+        symbol_entry ns = new_symbol();
+        deep_symbol_copy(ns, s);
+        deep_table_copy(ns, s->type_pointer->scopedFields);
+        insert(target->innerScope, ns);
+        s = s->next;
+    }
+    
+}
+
+char* component_string(token t){
+    int totalLen = 0;
+    int total = 0;
+    token t2 = t;
+    while(t2){
+        totalLen += strlen(t2->value);
+        total++;
+        t2 = t2->next;
+    }
+    char* result = calloc(totalLen + (total - 1), sizeof(char));
+    t2 = t;
+    strcpy(result, t2->value);
+    t2 = t2->next;
+    while(t2){sprintf(result, "%s.%s", result, t2->value); t2 = t2->next;}
+    return result;
 }
 
 

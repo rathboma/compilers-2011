@@ -84,7 +84,8 @@ variableDeclaration:
         {
             token t = $<details>1->chain;
             while(t){
-                installSymbol(currentSymbolTable, t->value, $<details>3->type, BASICSYM);
+                symbol_entry s = installSymbol(currentSymbolTable, t->value, $<details>3->type, BASICSYM);
+                deep_table_copy(s, $<details>3->type->scopedFields);
                 t = t->next;
             }
         }
@@ -173,8 +174,11 @@ PROCEDURE
 procedureDeclaration:
         proc ID PAREN_L formalParameterList PAREN_R EOL blockOrForward
         {
+            
             token t = $<details>4->chain;
+            printf("proc declaration, name: %s\n", $<strVal>2);
             symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, NULL, PROCEDURESYM);
+            
             func->numParameters = lengthOf(t);
             func->innerScope = currentSymbolTable;
             int i = 0;
@@ -184,9 +188,8 @@ procedureDeclaration:
                 i++;
                 t = t->next;
             }
-            //printf("done");
-            $<details>$ = new_wrapper(0, 0, 0);
             retreat();
+            
             
             //formalParameterList = list of tokens
             //add them all to the symbol table
@@ -317,7 +320,6 @@ assignmentStatement:
 procedureStatement:
         ID PAREN_L actualParameterList PAREN_R
         {
-            
             symbol_entry s = findSymbol(currentSymbolTable, $<strVal>1, 1, PROCEDURESYM);
             if(!s) s = findSymbol(currentSymbolTable, $<strVal>1, 1, FUNCTIONSYM);
             if(!s){
@@ -334,6 +336,9 @@ procedureStatement:
             int i = 0;
             for(i = 0; i < s->numParameters; i++){
                 type_entry actual = resolveType(currentSymbolTable, t->value);
+                char * statement = calloc(strlen("param ") + strlen(t->value), sizeof(char));
+                sprintf(statement, "%s%s", "param ", t->value);
+                soutput(statement);
                 type_entry declared = s->parameters[i]->type_pointer;
                 if(actual != declared){
                     yyerror("procedure argument is of the wrong type");
@@ -341,6 +346,9 @@ procedureStatement:
                 }
                 t = t->next;
             }
+            char result[100];
+            sprintf(result, "call %s", $<strVal>1);
+            soutput(result);
         }
         ;
 apList:
@@ -374,16 +382,56 @@ variable:
         // record.id
         // record[32].id
         // record.record.id
+        symbol_entry sym = find($<strVal>1, BASICSYM);
         $<details>$ = new_wrapper(0, resolveStructuredType(currentSymbolTable, $<strVal>1, $<details>2->chain), 0 );
         //printf("variable '%s', type: %s\n", $<strVal>1, $<details>$->type->name);
         //assuming just ID
         
-        tree_node component = $<details>2->node;
-
-        if(component){
-            $<details>$->node = $<details>2->node;
-        } else $<details>$->node = leaf_for($<strVal>1, BASICSYM);
+        token component = $<details>2 ? $<details>2->chain : NULL;
         
+/*        $<details>$->node = leaf_for_sym(sym);
+        if(component){
+            char * componentChain = component_string(component);
+            char* adr = addr(sym);
+            $<details>$->node->addr = calloc(strlen(adr) + strlen(componentChain) + 1, sizeof(char));
+            sprintf($<details>$->node->addr, "%s.%s", adr, componentChain);
+        }*/
+        
+        
+        
+/*        while(component){
+            sym = findSymbol(sym->innerScope, component->value, 0, BASICSYM);
+            component = component->next;
+        }*/
+        
+                //ignores arrays for now though...
+                tree_node current_node = leaf_for_sym(sym);
+                symbol_entry previous_symbol = sym;
+                while(component){
+                    //printf("looking for %s in inner scope of %s\n", component->value, $<strVal>1);
+                    
+                    //printf("got component symbol\n");
+                    tree_node nn = new_nodea();
+                    
+                    symbol_entry component_symbol;
+                    if(strcmp(component->value, "array") == 0){
+                        setops(nn, "[", "]");
+                        nn->right = component->node;
+                        printf("array found, right node value / address: %s / %s\n", component->node->value, component->node->addr);
+                        component_symbol = previous_symbol;
+                    }
+                    else{
+                        component_symbol = findSymbol(previous_symbol->innerScope, component->value, 0, BASICSYM);
+                        setops(nn, ".", "");
+                        nn->right = leaf_for_sym(component_symbol);
+                    }
+                    nn->left = current_node;
+                    current_node = nn;
+                    previous_symbol = component_symbol;
+                    component = component->next;
+                }
+                $<details>$->node = current_node;
+                
     }
     ;
 componentSelection:
@@ -393,11 +441,6 @@ componentSelection:
             $<details>$->chain->value = calloc(strlen($<strVal>2), sizeof(char));
             strcpy($<details>$->chain->value, $<strVal>2);
             $<details>$->chain->next = $<details>3->chain;
-            tree_node component = $<details>3->node;
-            
-            //some crazy shit needs to happen here. Need to search WITHIN the records symbols to get the address of this ID....
-            
-            
             
         }
     | ARRAY_L expression ARRAY_R componentSelection
@@ -409,6 +452,8 @@ componentSelection:
             $<details>$ = new_wrapper(new_token(), 0, 0);
             $<details>$->chain->value = calloc(strlen("array"), sizeof(char));
             strcpy($<details>$->chain->value, "array");
+            $<details>$->chain->node = $<details>2->node;
+            $<details>$->chain->next = $<details>4->chain;
         }
     | /*empty*/
     {$<details>$ = new_wrapper(0, 0, 0);}
@@ -575,7 +620,6 @@ factorOptions:
     | PAREN_L expression PAREN_R
     {
         $<details>$ = $<details>2;
-        printf("WARNING: not assigning node, array\n");
     }
     ;
 
@@ -638,6 +682,7 @@ typeDefinition:
             {   
                 reg("typeDefinition");
                 installSymbol(currentSymbolTable, $<strVal>1, $<details>3->type, BASICSYM);
+                
              }
         ;
 
