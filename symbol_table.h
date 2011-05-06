@@ -10,11 +10,22 @@ void yyerror(char* message){
     exit(1);
 }
 typedef struct node_struct * tree_node;
-struct node_struct;
+struct node_struct{
+    char* value;
+    char* addr;
+    char* lop;
+    char* rop;
+    char* label;
+    tree_node left;
+    tree_node right;
+    tree_node param;
+    int type;
+};
 typedef struct token_struct * token;
 struct token_struct{
     char* value;
     tree_node node;
+    char* typeValue;
     token next;
 };
 
@@ -69,6 +80,7 @@ struct s_entry{
     table innerScope;
     int symbolType;
     char * addr;
+    char * label;
     };
 
 
@@ -312,20 +324,38 @@ void deep_table_copy(symbol_entry target, table source){
     
 }
 
+
+char* get_value(token t){
+    char* result;
+    if(t->node){
+        char* c = t->node->value ? t->node->value : t->node->addr;
+        result = calloc(strlen(c) + 2, sizeof(char));
+        sprintf(result, "[%s]", c);
+    } else{
+        char* c = t->value;
+        result = calloc(strlen(c) + 1, sizeof(char));
+        sprintf(result, ".%s", c);
+    }
+
+    return result;
+}
+
 char* component_string(token t){
+
     int totalLen = 0;
     int total = 0;
     token t2 = t;
     while(t2){
-        totalLen += strlen(t2->value);
+        totalLen += strlen(get_value(t2));
+        if(t2->node) totalLen += 2;
         total++;
         t2 = t2->next;
     }
     char* result = calloc(totalLen + (total - 1), sizeof(char));
     t2 = t;
-    strcpy(result, t2->value);
+    strcpy(result, get_value(t2));
     t2 = t2->next;
-    while(t2){sprintf(result, "%s.%s", result, t2->value); t2 = t2->next;}
+    while(t2){sprintf(result, "%s%s", result, get_value(t2)); t2 = t2->next;}
     return result;
 }
 

@@ -20,9 +20,17 @@ wrapper new_wrapper(token c, type_entry t, tree_node n){
 }
 
 
-void type_check(wrapper a, wrapper b){
+void type_check(wrapper a, wrapper b, char* caller){
     if(a->type && b->type && a->type != b->type){
-        yyerror("Incompatible types detected (factor mulOpFactor)");
+        printf("error in %s\n", caller);
+        yyerror("type chash!");
+    }
+    
+}
+void strict_type_check(wrapper a, wrapper b, char* caller){
+    if(!a->type || !b->type || a->type != b->type){
+        printf("error in %s: %s vs %s\n", caller, (a->type && a->type->name ? a->type->name : "(null)"), (b->type && b->type->name ? b->type->name : "(null)"));
+        yyerror("type chash!");
     }
     
 }

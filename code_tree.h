@@ -11,21 +11,28 @@
 
 
 
-struct node_struct{
-    char* value;
-    char* addr;
-    char* lop;
-    char* rop;
-    tree_node left;
-    tree_node right;
-    int type;
-};
+
 
 
 char current_prefix = 'a';
 int current_num = 0;
-
+int label_num = 0;
+char label_prefix = 'a';
 tree_node setaddr(tree_node, char*);
+
+
+char * label(){
+    
+    //printf("returning: prefix: %c, current num: %d\n", current_prefix, current_num);
+    char * result = (char*) calloc(2 + strlen("label:"), sizeof(char));
+    sprintf(result, "label%c%d:", label_prefix, label_num);
+    label_num = (label_num + 1) % 10;
+    if(label_num == 0) label_prefix++;
+    return(result);
+}
+
+
+
 
 char * gen_address(){
     
@@ -109,6 +116,11 @@ void output(tree_node n){
     char* rop = n->rop ? n->rop : "";
     if(strcmp(n->lop, ":=") == 0 && n->left && n->right) printf("%s := %s\n", lval, rval);
     else printf("%s := %s%s%s%s\n", n->addr, lval, lop, rval, rop );
+}
+
+char * value(tree_node n){
+    if(n->left && n->left->type == LEAF && strcmp(":=", n->lop) == 0) return value(n->left);
+    return n->value ? n->value : n->addr;
 }
 
 

@@ -17,7 +17,10 @@ var
 	b : integer;
 	val : string;
 	ary : y;
-procedure bar(x : integer; y: integer); forward;
+function bar(x : integer; y: integer) : integer; 
+begin
+    x := 2;
+end;
 begin
 	a := 1 + (2 + 3) + 4;
 	b := a * 100;
@@ -27,7 +30,7 @@ begin
 	frank.zips[1] := 2;
 	john := frank;
 	john.name := "frank";
-	bar(1, 2);
+	frank.age := bar(1 + 3 - 4 * 2, 2);
 {	john.age := b;
 	val := john.name;
 	john.name := "not john";}

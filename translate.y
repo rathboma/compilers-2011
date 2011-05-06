@@ -125,10 +125,14 @@ functionDeclaration:
         {
             //printf("function.\n");
             token t = $<details>4->chain;
+            strict_type_check($<details>7, $<details>9, "function declaration");
+            printf("block type: %s\n", $<details>9->type->name);
+            
             
             symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, $<details>7->type, FUNCTIONSYM);
             //printf("installed symbol entry for function %s\n", func->symbol );
-
+            func->label = calloc(strlen($<strVal>1), sizeof(char));
+            strcpy(func->label, $<strVal>1);
             func->numParameters = lengthOf(t);
             //printf("number of parameters: %d\n", func->numParameters);
             func->innerScope = currentSymbolTable;
@@ -141,8 +145,19 @@ functionDeclaration:
                 i++;
                 t = t->next;
             }
-            $<details>$ = $<details>7;
+            $<details>$ = $<details>9;
+            
+            
             retreat();
+            if($<details>9->node){
+                char * result = calloc(strlen("funcreturn ") + strlen(value($<details>9->node)), sizeof(char));
+                sprintf(result, "funcreturn %s", value($<details>9->node));
+                soutput(result);
+            }else{
+                printf("function %s does not return correct type\n", $<strVal>2);
+                yyerror("type clash!");
+            }
+            
             
             //formalParameterList = list of tokens
             //add them all to the symbol table
@@ -155,18 +170,23 @@ resultType:
     ID
     {
         $<details>$ = new_wrapper(0, resolveType(currentSymbolTable->parent, $<strVal>1), 0);
+        printf("resultType type: %s\n", $<details>$->type->name);
         reg("resultType");
     }
     ;
 func:
 FUNC
 {
+    $<strVal>$ = label();
+    soutput($<strVal>$);
     advance();
 }
 ;
 proc:
 PROCEDURE
 {
+    $<strVal>$ = label();
+    soutput($<strVal>$);
     advance();
 }
 ;
@@ -178,7 +198,8 @@ procedureDeclaration:
             token t = $<details>4->chain;
             printf("proc declaration, name: %s\n", $<strVal>2);
             symbol_entry func = installSymbol(currentSymbolTable->parent, $<strVal>2, NULL, PROCEDURESYM);
-            
+            func->label = calloc(strlen($<strVal>1), sizeof(char));
+            strcpy(func->label, $<strVal>1);
             func->numParameters = lengthOf(t);
             func->innerScope = currentSymbolTable;
             int i = 0;
@@ -190,7 +211,7 @@ procedureDeclaration:
             }
             retreat();
             
-            
+            soutput("return");
             //formalParameterList = list of tokens
             //add them all to the symbol table
             // add each symbol to the params array
@@ -201,16 +222,18 @@ procedureDeclaration:
 blockOrForward:
     block 
     {
+        $<details>$ = $<details>1;
         reg("block or forward");
     }
     | FORWARD
     {
-        
+     $<details>$ = new_wrapper(0, 0, 0);   
     }
     ;
     
 block:  variableDeclarations compoundStatement
     {
+        $<details>$ = $<details>2;
         reg("block");
     }
 ;
@@ -254,28 +277,46 @@ formalParameterList:
 compoundStatement:
         BGN statementSequence endOfBlock
         {
+            $<details>$ = $<details>2;
             reg("compoundStatement");   
         }
         ;
 
 statementSequence:
         statement EOL statementSequence
-        {reg("statementSequence");}
+        {
+            printf("statement sequence: %s\n", $<details>$->type->name);
+            $<details>$ = $<details>3;
+            if(!$<details>3->type) $<details>$ = $<details>1;
+            reg("statementSequence");}
         | statement
-        {reg("statementSequence");}
+        {
+            $<details>$ = $<details>1;
+            reg("statementSequence");}
         ;
 statement:
     open
-    {reg("statement");}
+    {
+        $<details>$ = $<details>1;
+        reg("statement");
+        }
     | matched
-    {reg("statement");}
+    {
+        $<details>$ = $<details>1;
+
+        reg("statement");
+    }
     ;
 
 otherStatements:
     compoundStatement
-    {reg("structuredStatement");}
+    {
+        $<details>$ = $<details>1;
+        reg("structuredStatement");}
     | simpleStatement
-    {reg("simpleStatement");}
+    {
+        $<details>$ = $<details>1;
+        reg("simpleStatement");}
     ;
 loopHeader:
     FOR ID ASSIGNMENT expression TO expression DO
@@ -291,28 +332,44 @@ open:
     ;
 matched:
     IF expression THEN matched ELSE matched
-        {reg("structuredStatement");}
+        {
+            $<details>$ = new_wrapper(0, 0, 0);
+            reg("structuredStatement");}
     | otherStatements
-        {reg("structuredStatement");}
+        {
+            $<details>$ = $<details>1;
+            reg("structuredStatement");}
     | loopHeader matched
-        {reg("structuredStatement");}
+        {
+            $<details>$ = new_wrapper(0, 0, 0);
+            reg("structuredStatement");}
     ;
 
 
 simpleStatement:
     assignmentStatement
+    {
+        $<details>$ = $<details>1;
+        
+    }
     | procedureStatement
+    {
+        $<details>$ = $<details>1;
+    }
     | /*empty*/
+    {$<details>$ = new_wrapper(0, 0, 0);}
     ;
 assignmentStatement:
         variable ASSIGNMENT expression
             {
                 reg("assignment");
-                type_check($<details>1, $<details>3);
+                type_check($<details>1, $<details>3, "assignment statment");
                 
                 $<details>$ = new_wrapper(0, 0, new_nodea());
                 $<details>$->node->left = $<details>1->node; 
                 $<details>$->node->right = $<details>3->node;
+                $<details>$->chain = new_token();
+                $<details>$->type = $<details>1->type;
                 setops($<details>$->node, ":=", "");
                 output($<details>$->node);
             }
@@ -335,7 +392,7 @@ procedureStatement:
             token t = $<details>3->chain;
             int i = 0;
             for(i = 0; i < s->numParameters; i++){
-                type_entry actual = resolveType(currentSymbolTable, t->value);
+                type_entry actual = resolveType(currentSymbolTable, t->typeValue);
                 char * statement = calloc(strlen("param ") + strlen(t->value), sizeof(char));
                 sprintf(statement, "%s%s", "param ", t->value);
                 soutput(statement);
@@ -354,14 +411,18 @@ procedureStatement:
 apList:
         expression SEPARATOR apList
         {
+            if($<details>1->node->type != LEAF) output($<details>1->node);
             $<details>$ = new_wrapper(new_token(), 0, 0);
-            $<details>$->chain->value = $<details>1->type->name;
+            $<details>$->chain->typeValue = $<details>1->type->name;
+            $<details>$->chain->value = $<details>1->node->type == LEAF ? $<details>1->node->value : $<details>1->node->addr;
             $<details>$->chain->next = $<details>3->chain;
         }
         | expression
         {
+            if($<details>1->node->type != LEAF) output($<details>1->node);
             $<details>$ = new_wrapper(new_token(), 0, 0);
-            $<details>$->chain->value = $<details>1->type->name;
+            $<details>$->chain->typeValue = $<details>1->type->name;
+            $<details>$->chain->value = $<details>1->node->type == LEAF ? $<details>1->node->value : $<details>1->node->addr;
         }
         ;
 actualParameterList:
@@ -389,13 +450,15 @@ variable:
         
         token component = $<details>2 ? $<details>2->chain : NULL;
         
-/*        $<details>$->node = leaf_for_sym(sym);
+        $<details>$->node = leaf_for_sym(sym);
+        // for each component
+        //  
         if(component){
             char * componentChain = component_string(component);
             char* adr = addr(sym);
             $<details>$->node->addr = calloc(strlen(adr) + strlen(componentChain) + 1, sizeof(char));
-            sprintf($<details>$->node->addr, "%s.%s", adr, componentChain);
-        }*/
+            sprintf($<details>$->node->addr, "%s%s", adr, componentChain);
+        }
         
         
         
@@ -404,7 +467,7 @@ variable:
             component = component->next;
         }*/
         
-                //ignores arrays for now though...
+/*                //ignores arrays for now though...
                 tree_node current_node = leaf_for_sym(sym);
                 symbol_entry previous_symbol = sym;
                 while(component){
@@ -431,7 +494,7 @@ variable:
                     component = component->next;
                 }
                 $<details>$->node = current_node;
-                
+*/                
     }
     ;
 componentSelection:
@@ -453,6 +516,8 @@ componentSelection:
             $<details>$->chain->value = calloc(strlen("array"), sizeof(char));
             strcpy($<details>$->chain->value, "array");
             $<details>$->chain->node = $<details>2->node;
+            if($<details>$->chain->node->type != LEAF) output($<details>$->chain->node);
+            
             $<details>$->chain->next = $<details>4->chain;
         }
     | /*empty*/
@@ -491,7 +556,7 @@ simpleExpression:
         {
             reg("simpleExpression");
             
-            type_check($<details>3, $<details>2);
+            if($<details>3->type) type_check($<details>3, $<details>2, "simpleExpression");
             tree_node current;
             
             //IGNORING the sign for now
@@ -517,7 +582,7 @@ simpleExpression:
 addOpTerm:
     addOp term addOpTerm
     {
-        type_check($<details>3, $<details>2);
+        type_check($<details>3, $<details>2, "addopterm");
         
         $<details>$ = new_wrapper($<details>2->chain, $<details>2->type, new_nodea());
         setops($<details>$->node, $<strVal>1, "");
@@ -548,7 +613,7 @@ relationalOp:
 mulOpFactor:
     mulOp factor mulOpFactor
     {
-        type_check($<details>3, $<details>2);
+        type_check($<details>3, $<details>2, "mulOpFactor");
         
         $<details>$ = new_wrapper($<details>2->chain, $<details>2->type, new_nodea());
         setops($<details>$->node, $<strVal>1, "");
@@ -568,7 +633,7 @@ term:
     factor mulOpFactor
         {
             reg("term");
-            type_check($<details>2, $<details>1);
+            if($<details>2->type) type_check($<details>2, $<details>1, "term");
             tree_node mulop = $<details>2->node;
             if(mulop){
                 $<details>$ = $<details>2;
@@ -591,7 +656,7 @@ factorOptions:
     INT
     {
         $<details>$ = new_wrapper(0,installNumber($<strVal>1)->type_pointer, new_node());
-        printf("found int! %s\n", $<strVal>1);
+//        printf("found int! %s\n", $<strVal>1);
         leaf($<details>$->node, $<strVal>1);
         
     } 
@@ -610,7 +675,6 @@ factorOptions:
     {
         reg("factorOptions (function)");
         $<details>$ = $<details>1;
-        printf("WARNING: not assigning node, function ref\n");
     }
     | NOT factor
     {
@@ -640,8 +704,10 @@ functionReference:
                   token t = $<details>3->chain;
                   int i = 0;
                   for(i = 0; i < s->numParameters; i++){
-                      //printf("function call checking on %s\n", t->value);
-                      type_entry actual = resolveType(currentSymbolTable, t->value);
+                      type_entry actual = resolveType(currentSymbolTable, t->typeValue);
+                      char * statement = calloc(strlen("param ") + strlen(t->value), sizeof(char));
+                      sprintf(statement, "%s%s", "param ", t->value);
+                      soutput(statement);
                       type_entry declared = s->parameters[i]->type_pointer;
                       if(actual != declared){
                           yyerror("procedure argument is of the wrong type");
@@ -649,7 +715,11 @@ functionReference:
                       }
                       t = t->next;
                   }
-                  $<details>$ = new_wrapper(0, s->type_pointer, 0);
+                  $<details>$ = new_wrapper(0, s->type_pointer, new_node());
+                  tree_node n = $<details>$->node;
+                  n->type = LEAF;
+                  n->value = calloc(strlen("funcall ") + strlen(s->label) + 3 + strlen($<strVal>1), sizeof(char));
+                  sprintf(n->value, "funcall %s (%s)", $<strVal>1, s->label);
         }
     ;
 
