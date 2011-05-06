@@ -8,14 +8,27 @@ typedef struct lexwrapper * wrapper;
 struct lexwrapper{
     token chain;
     tree_node node;
+    tree_node statements[100];
+    int currentStatement;
     type_entry type;
 };
+
+void add(wrapper w, tree_node t){
+    w->currentStatement++;
+    w->statements[w->currentStatement] = t;
+}
+
+void addall(wrapper dest, wrapper source){
+    int i;
+    for(i = 0; i <= source->currentStatement; i++) {add(dest, source->statements[i]);}
+}
 
 wrapper new_wrapper(token c, type_entry t, tree_node n){
     wrapper w = malloc(sizeof(struct lexwrapper));
     w->chain = c;
     w->node = n;
     w->type = t;
+    w->currentStatement = -1;
     return w;
 }
 
@@ -33,4 +46,10 @@ void strict_type_check(wrapper a, wrapper b, char* caller){
         yyerror("type chash!");
     }
     
+}
+void outputall(wrapper block){
+    int i;
+    for(i = block->currentStatement; i >= 0; i--){
+        output(block->statements[i]);
+    }
 }

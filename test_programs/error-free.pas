@@ -17,11 +17,10 @@ var
 	b : integer;
 	val : string;
 	ary : y;
-function bar(x : integer; y: integer) : integer; 
+
 begin
-    x := 2;
-end;
-begin
+    if 1 > 2 then a := 30;
+{    a := 1;
 	a := 1 + (2 + 3) + 4;
 	b := a * 100;
 	john.name := "john";
@@ -31,7 +30,7 @@ begin
 	john := frank;
 	john.name := "frank";
 	frank.age := bar(1 + 3 - 4 * 2, 2);
-{	john.age := b;
+	john.age := b;
 	val := john.name;
 	john.name := "not john";}
 end.

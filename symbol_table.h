@@ -225,7 +225,7 @@ symbol_entry installSymbol(table t, char* value, type_entry theType, int symbolT
     // 5. if not, search table and parents to resolve type
     // 6. if type resolved, add, otherwise, error
     
-    printf("installing symbol '%s' with type '%s'\n", value, theType ? theType->name : "(null)" );
+//    printf("installing symbol '%s' with type '%s'\n", value, theType ? theType->name : "(null)" );
     //first see if the symbol already exists
     symbol_entry existing = findSymbol(t, value, 0, symbolType);
     if(existing) {
@@ -323,6 +323,7 @@ void deep_table_copy(symbol_entry target, table source){
     }
     
 }
+
 
 
 char* get_value(token t){
