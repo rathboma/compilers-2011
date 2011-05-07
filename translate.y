@@ -299,7 +299,7 @@ statementSequence:
             //printf("statement sequence: %s\n", $<details>$->type->name);
             reg("statementSequence");
             
-            if(!$<details>3->type) {
+            if(!$<details>3->node) {
                 $<details>$ = $<details>1;
                 }
             else {
@@ -339,13 +339,13 @@ otherStatements:
         $<details>$ = $<details>1;
         reg("simpleStatement");}
     ;
-loopHeader:
-    FOR ID ASSIGNMENT expression TO expression DO
-    | WHILE expression DO
 
 open:
     IF expression THEN statement
         {
+            tree_node fs = $<details>4->statements[$<details>4->currentStatement];
+            ensure_label(fs);
+
             
             $<details>$ = new_wrapper(0, 0, 0);
             tree_node lbl = new_node();
@@ -353,7 +353,6 @@ open:
             add($<details>$, lbl);
             addall($<details>$, $<details>4);
             
-            tree_node fs = $<details>4->statements[$<details>4->currentStatement];
             tree_node n = new_node();
             n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
             sprintf(n->value, "if %s goto %s", value($<details>2->node), fs->label);
@@ -366,9 +365,9 @@ open:
             sprintf(fs->value, "goto %s", lbl->label);
             add($<details>$, fs);
             add($<details>$, n);
-            add($<details>$, $<details>2->node);
+            if($<details>2->node->type != LEAF)  add($<details>$, $<details>2->node);
             //print: if expression.value goto statement.label
-            reg("structuredStatement");
+            reg("structuredStatement (if then statement)");
         }
     | IF expression THEN matched ELSE open
         {   
@@ -380,9 +379,9 @@ open:
             
             
             $<details>$ = new_wrapper(0, 0, 0);            
-
+            
             tree_node lbl = $<details>6->statements[$<details>6->currentStatement];
-
+            ensure_label(lbl);
             if(!lbl->label) lbl->label = label();
             addall($<details>$, $<details>6);
 
@@ -403,14 +402,89 @@ open:
             sprintf(fs->value, "goto %s", lbl->label);
             add($<details>$, fs);
             add($<details>$, n);
-            add($<details>$, $<details>2->node);
+            if($<details>2->node->type != LEAF) add($<details>$, $<details>2->node);
 
             
             
             
         }
-    | loopHeader open
-        {reg("structuredStatement");}
+    | FOR ID ASSIGNMENT expression TO expression DO open
+        {reg("structuredStatement");
+        ensure_label($<details>4->node);
+        ensure_label($<details>6->node);
+        
+        $<details>$ = new_wrapper(0, 0, 0);
+        tree_node end = new_node();
+        end->label = label();
+        add($<details>$, end);
+        
+        tree_node gtnode = new_node();
+        gtnode->type = LEAF;
+        gtnode->value = calloc(strlen("goto ") + strlen($<details>6->node->label), sizeof(char));
+        sprintf(gtnode->value, "goto %s", $<details>6->node->label);
+        add($<details>$, gtnode);
+        tree_node inc = new_node();
+        inc->value = calloc(strlen($<strVal>2)*2 + strlen(" := +1"), sizeof(char));
+        inc->type = LEAF;
+        sprintf(inc->value, "%s := %s+1",$<strVal>2, $<strVal>2);
+        add($<details>$, inc);
+        
+        addall($<details>$, $<details>8);
+        
+        
+        
+        tree_node n = new_node();
+        n->value = calloc(strlen("if  >  goto ") + strlen($<strVal>2) + strlen(value($<details>6->node)) + strlen(end->label), sizeof(char));
+        sprintf(n->value, "if %s > %s goto %s", $<strVal>2, value($<details>6->node), end->label);
+        n->type = LEAF;
+        add($<details>$, n);
+        if($<details>6->node->type != LEAF) $<details>6->node->hide = 1;
+        add($<details>$, $<details>6->node);
+        
+        n = new_node();
+        n->value = calloc(strlen(" := ") + strlen($<strVal>2) + strlen(value($<details>4->node)), sizeof(char));
+        sprintf(n->value, "%s := %s", $<strVal>2, value($<details>4->node));
+        n->type = LEAF;
+        add($<details>$, n);
+        if($<details>4->node->type == LEAF) $<details>4->node->hide = 1;
+        
+        add($<details>$, $<details>4->node);
+        
+        }
+    | WHILE expression DO open
+    {
+        ensure_label($<details>2->node);
+        ensure_label($<details>4->statements[$<details>4->currentStatement]);
+        tree_node matched = $<details>4->statements[$<details>4->currentStatement];
+        
+        $<details>$ = new_wrapper(0, 0, 0);
+        tree_node end = new_node();
+        end->label = label();
+        add($<details>$, end);
+        
+        
+        tree_node gtnode = new_node();
+        gtnode->type = LEAF;
+        gtnode->value = calloc(strlen("goto ") + strlen($<details>2->node->label), sizeof(char));
+        sprintf(gtnode->value, "goto %s", $<details>2->node->label);
+        add($<details>$, gtnode);
+        addall($<details>$, $<details>4);
+        
+        gtnode = new_node();
+        gtnode->type = LEAF;
+        gtnode->value = calloc(strlen("goto ") + strlen(end->label), sizeof(char));
+        sprintf(gtnode->value, "goto %s", end->label);
+        add($<details>$, gtnode);
+        
+        
+        tree_node n = new_node();
+        n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(matched->label), sizeof(char));
+        sprintf(n->value, "if %s goto %s", value($<details>2->node), matched->label);
+        n->type = LEAF;
+        add($<details>$, n);
+        if($<details>2->node->type == LEAF) $<details>2->node->hide = 1; add($<details>$, $<details>2->node);
+        
+    }
     ;
 matched:
     IF expression THEN matched ELSE matched
@@ -420,7 +494,7 @@ matched:
 
             tree_node lbl = $<details>6->statements[$<details>6->currentStatement];
 
-            if(!lbl->label) lbl->label = label();
+            ensure_label(lbl);
             addall($<details>$, $<details>6);
 
             
@@ -428,6 +502,7 @@ matched:
             addall($<details>$, $<details>4);
             
             tree_node fs = $<details>4->statements[$<details>4->currentStatement];
+            ensure_label(fs);
             tree_node n = new_node();
             n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
             sprintf(n->value, "if %s goto %s", value($<details>2->node), fs->label);
@@ -440,7 +515,7 @@ matched:
             sprintf(fs->value, "goto %s", lbl->label);
             add($<details>$, fs);
             add($<details>$, n);
-            add($<details>$, $<details>2->node);
+            if($<details>2->node->type != LEAF) add($<details>$, $<details>2->node);
         
         
         }
@@ -448,12 +523,103 @@ matched:
         {
             $<details>$ = $<details>1;
             reg("structuredStatement");}
-    | loopHeader matched
+    | FOR ID ASSIGNMENT expression TO expression DO matched
         {
+            ensure_label($<details>4->node);
+            ensure_label($<details>6->node);
+            
             $<details>$ = new_wrapper(0, 0, 0);
+            tree_node end = new_node();
+            end->label = label();
+            add($<details>$, end);
+            
+            tree_node gtnode = new_node();
+            gtnode->type = LEAF;
+            gtnode->value = calloc(strlen("goto ") + strlen($<details>6->node->label), sizeof(char));
+            sprintf(gtnode->value, "goto %s", $<details>6->node->label);
+            add($<details>$, gtnode);
+            tree_node inc = new_node();
+            inc->value = calloc(strlen($<strVal>2)*2 + strlen(" := +1"), sizeof(char));
+            inc->type = LEAF;
+            sprintf(inc->value, "%s := %s+1",$<strVal>2, $<strVal>2);
+            add($<details>$, inc);
+            
+            addall($<details>$, $<details>8);
+            
+            
+            
+            tree_node n = new_node();
+            n->value = calloc(strlen("if  >  goto ") + strlen($<strVal>2) + strlen(value($<details>6->node)) + strlen(end->label), sizeof(char));
+            sprintf(n->value, "if %s > %s goto %s", $<strVal>2, value($<details>6->node), end->label);
+            n->type = LEAF;
+            add($<details>$, n);
+            if($<details>6->node->type != LEAF) $<details>6->node->hide = 1;
+            add($<details>$, $<details>6->node);
+            
+            n = new_node();
+            n->value = calloc(strlen(" := ") + strlen($<strVal>2) + strlen(value($<details>4->node)), sizeof(char));
+            sprintf(n->value, "%s := %s", $<strVal>2, value($<details>4->node));
+            n->type = LEAF;
+            add($<details>$, n);
+            if($<details>4->node->type == LEAF) $<details>4->node->hide = 1;
+            
+            add($<details>$, $<details>4->node);
+            
+            //j = e1
+            //start:
+            // a0 = e2.tree
+            //if j > a0 goto end_label
+            // matched
+            // j := j+1
+            // goto start_label
+            // end_label:
+            
+            
             reg("structuredStatement");}
+    | WHILE expression DO matched
+    {
+        ensure_label($<details>2->node);
+        ensure_label($<details>4->statements[$<details>4->currentStatement]);
+        tree_node matched = $<details>4->statements[$<details>4->currentStatement];
+        
+        $<details>$ = new_wrapper(0, 0, 0);
+        tree_node end = new_node();
+        end->label = label();
+        add($<details>$, end);
+        
+        
+        tree_node gtnode = new_node();
+        gtnode->type = LEAF;
+        gtnode->value = calloc(strlen("goto ") + strlen($<details>2->node->label), sizeof(char));
+        sprintf(gtnode->value, "goto %s", $<details>2->node->label);
+        add($<details>$, gtnode);
+        addall($<details>$, $<details>4);
+        
+        gtnode = new_node();
+        gtnode->type = LEAF;
+        gtnode->value = calloc(strlen("goto ") + strlen(end->label), sizeof(char));
+        sprintf(gtnode->value, "goto %s", end->label);
+        add($<details>$, gtnode);
+        
+        
+        tree_node n = new_node();
+        n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(matched->label), sizeof(char));
+        sprintf(n->value, "if %s goto %s", value($<details>2->node), matched->label);
+        n->type = LEAF;
+        add($<details>$, n);
+        if($<details>2->node->type == LEAF) $<details>2->node->hide = 1; add($<details>$, $<details>2->node);
+        
+        // start:
+        // a = e1
+        // if a goto label0
+        // goto end
+        // label0: matched
+        // goto start:
+        // end:
+        
+        
+    }
     ;
-
 
 simpleStatement:
     assignmentStatement
@@ -480,7 +646,7 @@ assignmentStatement:
                 $<details>$->node->right = $<details>3->node;
                 $<details>$->chain = new_token();
                 $<details>$->type = $<details>1->type;
-                $<details>$->node->label = label();
+//                $<details>$->node->label = label();
                 setops($<details>$->node, ":=", "");
                 add($<details>$, $<details>$->node);
                 //output($<details>$->node);

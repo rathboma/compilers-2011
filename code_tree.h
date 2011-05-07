@@ -125,7 +125,9 @@ char * value(tree_node n){
     return n->value ? n->value : n->addr;
 }
 
-
+void ensure_label(tree_node n){
+    if(!n->label) n->label = label();
+}
 
 
 

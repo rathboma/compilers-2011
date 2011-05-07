@@ -19,6 +19,7 @@ struct node_struct{
     tree_node left;
     tree_node right;
     tree_node param;
+    int hide;
     int type;
 };
 typedef struct token_struct * token;

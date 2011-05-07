@@ -18,8 +18,9 @@ var
 	val : string;
 	ary : y;
 
-begin
-    if 1 > 2 then a := 30
+begin    
+
+    while b do a := a + 1;
 {    a := 1;
 	a := 1 + (2 + 3) + 4;
 	b := a * 100;
