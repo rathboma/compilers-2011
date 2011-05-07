@@ -50,6 +50,7 @@ void strict_type_check(wrapper a, wrapper b, char* caller){
 void outputall(wrapper block){
     int i;
     for(i = block->currentStatement; i >= 0; i--){
+        if(block->statements[i]->type == LEAF) printf("%s\n", block->statements[i]->value);
         output(block->statements[i]);
     }
 }

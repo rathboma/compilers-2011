@@ -24,8 +24,8 @@ tree_node setaddr(tree_node, char*);
 char * label(){
     
     //printf("returning: prefix: %c, current num: %d\n", current_prefix, current_num);
-    char * result = (char*) calloc(2 + strlen("label:"), sizeof(char));
-    sprintf(result, "label%c%d:", label_prefix, label_num);
+    char * result = (char*) calloc(2 + strlen("label"), sizeof(char));
+    sprintf(result, "label%c%d", label_prefix, label_num);
     label_num = (label_num + 1) % 10;
     if(label_num == 0) label_prefix++;
     return(result);
@@ -107,9 +107,11 @@ void soutput(char* s){
 void output(tree_node n){
     if(!n) return;
     //printf("output called for node. leaf? %c, addr|val: %s|%s, l/r: %c/%c\n", (n->type == LEAF) ? 't' : 'f', n->addr, n->value, n->left ? 't' : 'f', n->right ? 't' : 'f');
+    if(n->label) printf("%s:\n", n->label);
     if(n->type == LEAF) return;
     output(n->left);
     output(n->right);
+    if(!n->left && !n->right) return;
     char* lval = n->left->value ? n->left->value : n->left->addr;
     char* rval = n->right ? (n->right->value ? n->right->value : n->right->addr) : "";
     char* lop = n->lop ? n->lop : "";

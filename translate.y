@@ -346,26 +346,104 @@ loopHeader:
 open:
     IF expression THEN statement
         {
-            $<details>$ = $<details>4;
+            
+            $<details>$ = new_wrapper(0, 0, 0);
+            tree_node lbl = new_node();
+            lbl->label = label();
+            add($<details>$, lbl);
+            addall($<details>$, $<details>4);
+            
             tree_node fs = $<details>4->statements[$<details>4->currentStatement];
-            char * result = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
-            sprintf(result, "if %s goto %s", value($<details>2->node), fs->label);
-            tree_node n = $<details>$->node;
-            n->value = result;
+            tree_node n = new_node();
+            n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
+            sprintf(n->value, "if %s goto %s", value($<details>2->node), fs->label);
+            n->type = LEAF;
+            
+            
+            fs = new_node();
+            fs->type = LEAF;
+            fs->value = calloc(strlen("goto ") + strlen(lbl->label), sizeof(char));
+            sprintf(fs->value, "goto %s", lbl->label);
+            add($<details>$, fs);
             add($<details>$, n);
+            add($<details>$, $<details>2->node);
             //print: if expression.value goto statement.label
             reg("structuredStatement");
         }
     | IF expression THEN matched ELSE open
-        {reg("structuredStatement");}
+        {   
+            
+            // if x then goto labal1
+            // goto label2
+            // label1: a := a + 1
+            // label2:
+            
+            
+            $<details>$ = new_wrapper(0, 0, 0);            
+
+            tree_node lbl = $<details>6->statements[$<details>6->currentStatement];
+
+            if(!lbl->label) lbl->label = label();
+            addall($<details>$, $<details>6);
+
+            
+            //IF X IS TRUE
+            addall($<details>$, $<details>4);
+            
+            tree_node fs = $<details>4->statements[$<details>4->currentStatement];
+            tree_node n = new_node();
+            n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
+            sprintf(n->value, "if %s goto %s", value($<details>2->node), fs->label);
+            n->type = LEAF;
+            
+            
+            fs = new_node();
+            fs->type = LEAF;
+            fs->value = calloc(strlen("goto ") + strlen(lbl->label), sizeof(char));
+            sprintf(fs->value, "goto %s", lbl->label);
+            add($<details>$, fs);
+            add($<details>$, n);
+            add($<details>$, $<details>2->node);
+
+            
+            
+            
+        }
     | loopHeader open
         {reg("structuredStatement");}
     ;
 matched:
     IF expression THEN matched ELSE matched
-        {
-            $<details>$ = new_wrapper(0, 0, 0);
-            reg("structuredStatement");}
+        {reg("structuredStatement");
+
+            $<details>$ = new_wrapper(0, 0, 0);            
+
+            tree_node lbl = $<details>6->statements[$<details>6->currentStatement];
+
+            if(!lbl->label) lbl->label = label();
+            addall($<details>$, $<details>6);
+
+            
+            //IF X IS TRUE
+            addall($<details>$, $<details>4);
+            
+            tree_node fs = $<details>4->statements[$<details>4->currentStatement];
+            tree_node n = new_node();
+            n->value = calloc(strlen("if  goto ") + strlen(value($<details>2->node)) + strlen(fs->label), sizeof(char));
+            sprintf(n->value, "if %s goto %s", value($<details>2->node), fs->label);
+            n->type = LEAF;
+            
+            
+            fs = new_node();
+            fs->type = LEAF;
+            fs->value = calloc(strlen("goto ") + strlen(lbl->label), sizeof(char));
+            sprintf(fs->value, "goto %s", lbl->label);
+            add($<details>$, fs);
+            add($<details>$, n);
+            add($<details>$, $<details>2->node);
+        
+        
+        }
     | otherStatements
         {
             $<details>$ = $<details>1;
@@ -567,13 +645,11 @@ componentSelection:
 expression:
     simpleExpression relationalOp simpleExpression
         {
+            
             reg("expression");
-            $<details>$ = $<details>1;
-
-            if($<details>1->type != $<details>3->type){
-                yyerror("types don't match (expression)");
-            }
-            $<details>$->node = new_node();
+            $<details>$ = new_wrapper(0, $<details>1->type, new_nodea());
+            type_check($<details>1, $<details>3, "expression");
+            
             setops($<details>$->node, $<strVal>2, "");
             $<details>$->node->left = $<details>1->node;
             $<details>$->node->right = $<details>3->node; 
@@ -587,7 +663,10 @@ expression:
     ;
     
 sign:
-    ADDOP {reg("sign"); $<strVal>$ = $<strVal>1;} | /*empty*/ {$<strVal>$ = 0;}
+    ADDOP 
+    {reg("sign"); $<strVal>$ = $<strVal>1;} 
+    | /*empty*/ 
+    {$<strVal>$ = 0;}
     ;
 /*  - b | -b + 3 | a*b+c/d */
 simpleExpression:
@@ -610,12 +689,7 @@ simpleExpression:
             } else {
                 $<details>$ = $<details>2;
             }
-            $<details>$->type = $<details>2->type;
-            
-            
-
-
-            
+            $<details>$->type = $<details>2->type;            
         }
     ;
 addOpTerm:

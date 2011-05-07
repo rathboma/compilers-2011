@@ -19,7 +19,7 @@ var
 	ary : y;
 
 begin
-    if 1 > 2 then a := 30;
+    if 1 > 2 then a := 30
 {    a := 1;
 	a := 1 + (2 + 3) + 4;
 	b := a * 100;

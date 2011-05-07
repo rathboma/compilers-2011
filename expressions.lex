@@ -28,6 +28,7 @@ id				{char}({char}|{digit})*
 int             [+-]?{integer}
 float			[+-]?{decimal}(E{int}+)?
 string_literal 	\"[^"]*\"
+relop           "<"|">"|"<="|">="|"<>"
 
 
 %%
@@ -64,12 +65,13 @@ string_literal 	\"[^"]*\"
                     strcpy(yylval.strVal, yytext);
                     return(ADDOP);
                 }
+                
 "*"|"div"       {
                     yylval.strVal = calloc(strlen(yytext), sizeof(char));
                     strcpy(yylval.strVal, yytext);
                     return(MULTIOP);
                 }
-"<" | ">" | "<="|">="|"<>"  {yylval.strVal = calloc(strlen(yytext), sizeof(char)); strcpy(yylval.strVal, yytext); return(RELATIONAL);}
+
 "="             {   yylval.strVal = calloc(strlen(yytext), sizeof(char));
                     strcpy(yylval.strVal, yytext); 
                     return(EQUALS);
@@ -84,7 +86,12 @@ string_literal 	\"[^"]*\"
 ")"                 {return(PAREN_R);} 
 "["                 {return(ARRAY_L);} 
 "]"                 {return(ARRAY_R);}
-
+  
+{relop}         {
+                    yylval.strVal = calloc(strlen(yytext), sizeof(char)); 
+                    strcpy(yylval.strVal, yytext); 
+                    return(RELATIONAL);
+                    }
 
 {ws}|{comment}      {/* do nothing*/}
 {id}                {
