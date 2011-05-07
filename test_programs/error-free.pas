@@ -17,7 +17,11 @@ var
 	b : integer;
 	val : string;
 	ary : y;
-
+	function foo2(a : integer; c : string) : integer; 
+    begin
+       while a do
+           a := a + 1
+    end;
 begin    
 
     while b do a := a + 1;

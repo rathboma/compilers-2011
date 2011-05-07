@@ -103,11 +103,11 @@ tree_node leaf(tree_node n, char* val){
 void soutput(char* s){
     printf("%s\n", s);
 }
-
+FILE *output_file;
 void output(tree_node n){
     if(!n) return;
     //printf("output called for node. leaf? %c, addr|val: %s|%s, l/r: %c/%c\n", (n->type == LEAF) ? 't' : 'f', n->addr, n->value, n->left ? 't' : 'f', n->right ? 't' : 'f');
-    if(n->label) printf("%s:\n", n->label);
+    if(n->label) fprintf(output_file, "%s:\n", n->label);
     if(n->type == LEAF) return;
     output(n->left);
     output(n->right);
@@ -116,14 +116,16 @@ void output(tree_node n){
     char* rval = n->right ? (n->right->value ? n->right->value : n->right->addr) : "";
     char* lop = n->lop ? n->lop : "";
     char* rop = n->rop ? n->rop : "";
-    if(strcmp(n->lop, ":=") == 0 && n->left && n->right) printf("%s := %s\n", lval, rval);
-    else printf("%s := %s%s%s%s\n", n->addr, lval, lop, rval, rop );
+    if(strcmp(n->lop, ":=") == 0 && n->left && n->right) fprintf(output_file, "%s := %s\n", lval, rval);
+    else fprintf(output_file, "%s := %s%s%s%s\n", n->addr, lval, lop, rval, rop );
 }
 
 char * value(tree_node n){
     if(n->left && n->left->type == LEAF && strcmp(":=", n->lop) == 0) return value(n->left);
     return n->value ? n->value : n->addr;
 }
+
+
 
 void ensure_label(tree_node n){
     if(!n->label) n->label = label();

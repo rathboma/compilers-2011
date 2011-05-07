@@ -155,10 +155,9 @@ functionDeclaration:
 
             //print out intermediate code
             wrapper block = $<details>9;
-            soutput($<strVal>2);
+            printf("%s:\n", $<strVal>2);
             outputall(block);
             if($<details>9->node && $<details>9->node->type != -1){
-                printf("here\n");
                 char * result = calloc(strlen("funcreturn ") + strlen(value($<details>9->node)), sizeof(char));
                 sprintf(result, "funcreturn %s", value($<details>9->node));
                 soutput(result);
@@ -214,10 +213,9 @@ procedureDeclaration:
             }
             wrapper block = $<details>7;
             retreat();
-            soutput($<strVal>2);
+            printf("%s:\n", $<strVal>2);
             outputall(block);
-            
-            soutput("return");
+            if($<details>7->node->type != -1) soutput("return");
             //formalParameterList = list of tokens
             //add them all to the symbol table
             // add each symbol to the params array
@@ -287,7 +285,7 @@ compoundStatement:
         {
             
             $<details>$ = $<details>2;
-            printf("size of statement chain: %d\n", $<details>$->currentStatement);
+            //printf("size of statement chain: %d\n", $<details>$->currentStatement);
             reg("compoundStatement");
         }
         ;
@@ -655,6 +653,7 @@ assignmentStatement:
 procedureStatement:
         ID PAREN_L actualParameterList PAREN_R
         {
+            $<details>$ = new_wrapper(0, 0, 0);
             symbol_entry s = findSymbol(currentSymbolTable, $<strVal>1, 1, PROCEDURESYM);
             if(!s) s = findSymbol(currentSymbolTable, $<strVal>1, 1, FUNCTIONSYM);
             if(!s){
@@ -671,15 +670,19 @@ procedureStatement:
             sprintf(result, "call %s", $<strVal>1);
             tree_node nu = new_node();
             nu->value = result;
+            nu->type = LEAF;
             add($<details>$, nu);
             token t = $<details>3->chain;
-            int i = 0;
+            int i;
             for(i = 0; i < s->numParameters; i++){
+                printf("loop\n");
                 type_entry actual = resolveType(currentSymbolTable, t->typeValue);
                 char * statement = calloc(strlen("param ") + strlen(t->value), sizeof(char));
                 sprintf(statement, "%s%s", "param ", t->value);
+                
                 tree_node n = new_node();
                 n->value = statement;
+                n->type = LEAF;
                 add($<details>$, n);
                 type_entry declared = s->parameters[i]->type_pointer;
                 if(actual != declared){
@@ -688,6 +691,7 @@ procedureStatement:
                 }
                 t = t->next;
             }
+            
 
         }
         ;
@@ -697,15 +701,16 @@ apList:
             if($<details>1->node->type != LEAF) output($<details>1->node);
             $<details>$ = new_wrapper(new_token(), 0, 0);
             $<details>$->chain->typeValue = $<details>1->type->name;
-            $<details>$->chain->value = $<details>1->node->type == LEAF ? $<details>1->node->value : $<details>1->node->addr;
+            $<details>$->chain->value = value($<details>1->node);
             $<details>$->chain->next = $<details>3->chain;
         }
         | expression
         {
             if($<details>1->node->type != LEAF) output($<details>1->node);
             $<details>$ = new_wrapper(new_token(), 0, 0);
+            printf("expression value: %s\n", value($<details>1->node));
             $<details>$->chain->typeValue = $<details>1->type->name;
-            $<details>$->chain->value = $<details>1->node->type == LEAF ? $<details>1->node->value : $<details>1->node->addr;
+            $<details>$->chain->value = value($<details>1->node);
         }
         ;
 actualParameterList:
@@ -1100,7 +1105,7 @@ char **argv;
     if ( argc == 0 ) exit(1);
             
     yyin = fopen( argv[0], "r" );
-
+    output_file = fopen("code.output", "w");
     int i = 0;
 
     yyparse();

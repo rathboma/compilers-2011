@@ -49,8 +49,12 @@ void strict_type_check(wrapper a, wrapper b, char* caller){
 }
 void outputall(wrapper block){
     int i;
+ //   printf("outputting all %d size\n", block->currentStatement + 1);
     for(i = block->currentStatement; i >= 0; i--){
-        if(block->statements[i]->type == LEAF && block->statements[i]->hide != 1) printf("%s\n", block->statements[i]->value);
-        output(block->statements[i]);
+//        printf("outputting %d\n", i);
+        if(block->statements[i]){
+            if(block->statements[i]->type == LEAF && block->statements[i]->hide != 1) fprintf(output_file, "%s\n", block->statements[i]->value);
+            output(block->statements[i]);
+        }
     }
 }

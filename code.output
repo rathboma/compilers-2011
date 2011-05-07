@@ -1,0 +1,7 @@
+int := 0
+i := int
+i := i
+i := 0
+false := b
+a5 := bbfalse
+true := a5
